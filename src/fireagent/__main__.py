@@ -1,0 +1,1 @@
+"""Fireagent — Python SDK entry point."""
