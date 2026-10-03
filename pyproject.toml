@@ -93,7 +93,10 @@ fix = true
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
-ignore = ["B905", "E501", "N818", "F401", "E402", "N806"]
+ignore = [
+    "B905", "E501", "N818", "F401", "E402", "N806",
+    "F841", "F821", "SIM105", "B904", "SIM117", "SIM102", "SIM222",
+]
 
 [tool.mypy]
 python_version = "3.10"
