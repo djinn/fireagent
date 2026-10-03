@@ -6,6 +6,7 @@ import asyncio
 import json
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import sys
@@ -75,14 +76,20 @@ class MicroVMManager:
         workspace_img = sandbox_dir / "workspace.img"
 
         # Create a workspace volume
+        size_bytes = disk_mib * 1024 * 1024
         try:
-            subprocess.run(
-                ["qemu-img", "create", "-f", "qcow2", "-o", f"size={disk_mib}MiB", str(workspace_img)],
-                check=True,
-                capture_output=True,
-            )
-        except subprocess.CalledProcessError as exc:
-            logger.error("Failed to create workspace image for %s: %s", sandbox_id, exc.stderr)
+            if shutil.which("qemu-img"):
+                subprocess.run(
+                    ["qemu-img", "create", "-f", "qcow2", "-o", f"size={disk_mib}MiB", str(workspace_img)],
+                    check=True,
+                    capture_output=True,
+                )
+            else:
+                # Fallback: sparse raw file (works on CI, macOS, minimal hosts)
+                with open(workspace_img, "wb") as f:
+                    f.truncate(size_bytes)
+        except (subprocess.CalledProcessError, OSError) as exc:
+            logger.error("Failed to create workspace image for %s: %s", sandbox_id, exc)
             return False
 
         # Locate guest image

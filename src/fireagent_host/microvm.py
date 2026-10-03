@@ -9,6 +9,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import os
+import shutil
 import signal
 import subprocess
 import tempfile
@@ -137,25 +138,56 @@ class MicroVMManager:
         return instance
 
     async def _create_workspace(self, path: Path, size_mib: int) -> bool:
-        """Create a qcow2 workspace image."""
-        try:
-            result = subprocess.run(
-                ["qemu-img", "create", "-f", "qcow2", "-o",
-                 f"size={size_mib}MiB", str(path)],
-                capture_output=True, text=True,
-            )
-            if result.returncode != 0:
-                # Fallback: create a raw ext4 image
-                with open(path, "wb") as f:
-                    f.truncate(size_mib * 1024 * 1024)
-                subprocess.run(
-                    ["mkfs.ext4", "-F", str(path)],
-                    capture_output=True,
+        """Create a workspace image.
+
+        Prefers qcow2 (copy-on-write) with mkfs.ext4 for a real filesystem,
+        falling back to a sparse raw file when tools are unavailable (e.g. CI,
+        macOS, minimal containers).
+        """
+        size_bytes = size_mib * 1024 * 1024
+
+        # 1. Try qemu-img (qcow2) + mkfs.ext4
+        if shutil.which("qemu-img"):
+            try:
+                result = subprocess.run(
+                    ["qemu-img", "create", "-f", "qcow2", "-o",
+                     f"size={size_mib}MiB", str(path)],
+                    capture_output=True, text=True,
                 )
+                if result.returncode == 0:
+                    self._mkfs(path)
+                    return True
+            except Exception as exc:
+                logger.debug("qemu-img failed, falling back: %s", exc)
+
+        # 2. Try creating a sparse raw file + mkfs.ext4
+        if shutil.which("mkfs.ext4"):
+            try:
+                with open(path, "wb") as f:
+                    f.truncate(size_bytes)
+                self._mkfs(path)
+                return True
+            except Exception as exc:
+                logger.debug("mkfs.ext4 failed, falling back: %s", exc)
+
+        # 3. Fallback: pure-Python sparse raw image (no filesystem)
+        #    Sufficient for mock mode and as a writable block device.
+        try:
+            with open(path, "wb") as f:
+                f.truncate(size_bytes)
             return True
         except Exception as exc:
             logger.error("Failed to create workspace: %s", exc)
             return False
+
+    @staticmethod
+    def _mkfs(path: Path) -> None:
+        """Best-effort filesystem creation on a workspace image."""
+        if shutil.which("mkfs.ext4"):
+            try:
+                subprocess.run(["mkfs.ext4", "-F", str(path)], capture_output=True)
+            except Exception:
+                pass
 
     async def _launch_real(
         self,
