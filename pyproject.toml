@@ -9,7 +9,7 @@ description = "Elastic agent sandbox platform powered by Firecracker microVMs"
 readme = "README.md"
 license = {text = "MIT"}
 authors = [
-    {name = "Supreet Sethi", email = "supreet@spaceswordai.com"},
+    {name = "Supreet Sethi", email = "supreet@djinn.ai"},
 ]
 classifiers = [
     "Development Status :: 3 - Alpha",

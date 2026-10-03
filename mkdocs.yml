@@ -1,13 +1,13 @@
 # Fireagent Documentation
 # License: MIT | Author: Supreet Sethi | (c) 2026
-# https://spaceswordai.github.io/fireagent
+# https://djinn.github.io/fireagent
 
 site_name: Fireagent
 site_description: Elastic agent sandbox platform powered by Firecracker microVMs — create, command, and destroy isolated Linux sandboxes through a clean API.
 site_author: Supreet Sethi
-site_url: https://spaceswordai.github.io/fireagent
-repo_name: spaceswordai/fireagent
-repo_url: https://github.com/spaceswordai/fireagent
+site_url: https://djinn.github.io/fireagent
+repo_name: djinn/fireagent
+repo_url: https://github.com/djinn/fireagent
 edit_uri: edit/main/docs/
 copyright: Copyright &copy; 2026 Supreet Sethi &mdash; Spacesword AI
 
@@ -54,9 +54,9 @@ theme:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/spaceswordai/fireagent
+      link: https://github.com/djinn/fireagent
     - icon: fontawesome/solid/globe
-      link: https://spaceswordai.com
+      link: https://djinn.ai
   generator: false
   consent:
     title: Cookie consent
@@ -107,7 +107,7 @@ markdown_extensions:
   - pymdownx.keys
   - pymdownx.magiclink:
       repo_url_shorthand: true
-      user: spaceswordai
+      user: djinn
       repo: fireagent
   - pymdownx.mark
   - pymdownx.pathconverter

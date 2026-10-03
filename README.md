@@ -2,7 +2,7 @@
 
 **Elastic agent sandbox platform powered by Firecracker microVMs.**
 
-[![CI](https://github.com/spaceswordai/fireagent/actions/workflows/ci.yml/badge.svg)](https://github.com/spaceswordai/fireagent/actions/workflows/ci.yml)
+[![CI](https://github.com/djinn/fireagent/actions/workflows/ci.yml/badge.svg)](https://github.com/djinn/fireagent/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/fireagent.svg)](https://pypi.org/project/fireagent/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-purple.svg)](https://opensource.org/licenses/MIT)
 [![arXiv:2609.22978](https://img.shields.io/badge/arXiv-2609.22978-brightgreen)](https://arxiv.org/abs/2609.22978)
@@ -499,4 +499,4 @@ pytest --cov=fireagent --cov=fireagent_host --cov-report=html
 
 MIT — Copyright (c) 2026 Supreet Sethi, Spacesword AI.
 
-Full documentation at **[spaceswordai.github.io/fireagent](https://spaceswordai.github.io/fireagent)**
+Full documentation at **[djinn.github.io/fireagent](https://djinn.github.io/fireagent)**

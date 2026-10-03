@@ -21,7 +21,7 @@ We follow the [Contributor Covenant](https://www.contributor-covenant.org/) code
 ### 2. Fork and branch
 
 ```bash
-git clone https://github.com/spaceswordai/fireagent.git
+git clone https://github.com/djinn/fireagent.git
 git checkout -b fix/description-of-fix
 ```
 
@@ -118,6 +118,6 @@ security(isolation): block additional private IP ranges
 
 - **Issues**: Open a GitHub issue for bugs, feature requests, and questions
 - **Discussions**: Use GitHub Discussions for design discussions and RFCs
-- **Security**: Email security@spaceswordai.com for security vulnerabilities
+- **Security**: Email security@djinn.ai for security vulnerabilities
 
 Thank you for contributing!

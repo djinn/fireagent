@@ -67,7 +67,7 @@ fireagent/
 ### Clone and install
 
 ```bash
-git clone https://github.com/spaceswordai/fireagent.git
+git clone https://github.com/djinn/fireagent.git
 cd fireagent
 
 python3 -m venv .venv

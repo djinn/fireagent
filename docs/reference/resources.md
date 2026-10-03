@@ -54,13 +54,13 @@
 
 ## Community
 
-- **GitHub Issues**: https://github.com/spaceswordai/fireagent/issues
-- **GitHub Discussions**: https://github.com/spaceswordai/fireagent/discussions
-- **Spacesword AI**: https://spaceswordai.com
+- **GitHub Issues**: https://github.com/djinn/fireagent/issues
+- **GitHub Discussions**: https://github.com/djinn/fireagent/discussions
+- **Spacesword AI**: https://djinn.ai
 
 ## License
 
-Fireagent is released under the [MIT License](https://github.com/spaceswordai/fireagent/blob/main/LICENSE).
+Fireagent is released under the [MIT License](https://github.com/djinn/fireagent/blob/main/LICENSE).
 
 ## Contributors
 
