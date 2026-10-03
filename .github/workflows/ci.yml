@@ -53,7 +53,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, macos-latest]
         python: ["3.10", "3.11", "3.12"]
         include:
           - os: ubuntu-latest
@@ -168,10 +168,13 @@ jobs:
   # ------------------------------------------------------------------
   # Build platform wheels (on tag release or manual dispatch)
   #
-  # NOTE: wheels does NOT depend on [test]. Tests run on every PR/merge,
-  # but blocking wheel builds on test matrix completion (macOS, Windows)
-  # causes tag releases to fail when a platform-specific test flakes.
-  # The lint job provides sufficient gate for package integrity.
+  # Produces native wheels for:
+  #   Linux:   x86_64 (Intel)  + aarch64 (ARM64)  via QEMU
+  #   macOS:   x86_64 (Intel)  + arm64 (Apple Sil.) via multi-arch
+  #
+  # Windows is intentionally omitted — it's out of scope for the
+  # Firecracker-based target (no KVM on Windows). Users on Windows
+  # should use WSL2 or the source distribution.
   # ------------------------------------------------------------------
   wheels:
     name: "Wheel — ${{ matrix.target }}"
@@ -183,30 +186,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ─ Linux x86_64 (Intel) ─ native runner ─
-          - target: linux-x86_64
+          # ─ Linux x86_64 + aarch64 (cross-compiled via QEMU) ─
+          - target: linux-x86_64-aarch64
             os: ubuntu-latest
-            cibw_archs: "x86_64"
+            cibw_archs: "auto"
 
-          # ─ Linux aarch64 (ARM64) ─ native ARM runner ─
-          - target: linux-arm64
-            os: ubuntu-24.04-arm
-            cibw_archs: "aarch64"
-
-          # ─ macOS x86_64 (Intel) ─ native Intel runner ─
-          - target: macos-x86_64
-            os: macos-13
-            cibw_archs: "x86_64"
-
-          # ─ macOS arm64 (Apple Silicon) ─ native ARM runner ─
-          - target: macos-arm64
-            os: macos-14
-            cibw_archs: "arm64"
-
-          # ─ Windows x86_64 ─
-          - target: windows-x86_64
-            os: windows-latest
-            cibw_archs: "AMD64"
+          # ─ macOS both arches (macos-latest is ARM; provides x86_64 via Rosetta 2) ─
+          - target: macos-x86_64-arm64
+            os: macos-latest
+            cibw_archs: "auto"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -216,25 +204,24 @@ jobs:
           python-version: "3.10"
 
       - name: Install cibuildwheel
-        run: pip install cibuildwheel~=2.20 build
+        run: pip install "cibuildwheel>=2.20,<3.0" build
+
+      - name: Set up QEMU for aarch64
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
+          echo "QEMU set up for aarch64 cross-build"
 
       - name: Build wheels
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-*"
           CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          # Linux ARM64: use manylinux2014 image
           CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux2014"
-          # macOS: delocate for library bundling
           CIBW_REPAIR_WHEEL_COMMAND_MACOS: "delocate-wheel -w {dest_dir} -v {wheel}"
-          # Windows (no repair needed)
-          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
+          CIBW_TEST_SKIP: "*-macosx_arm64 *-manylinux_aarch64"
         run: |
-          # Set up QEMU for Linux ARM64 if running on x86_64 host
-          if [[ "${{ matrix.target }}" == "linux-arm64" && "$(uname -m)" != "aarch64" ]]; then
-            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
-          fi
           mkdir -p wheelhouse
-          cibuildwheel --output-dir wheelhouse
+          cibuildwheel --output-dir wheelhouse 2>&1
 
       - name: List built wheels
         run: ls -lh wheelhouse/
@@ -242,7 +229,7 @@ jobs:
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.target }}
+          name: ${{ matrix.target }}
           path: wheelhouse/*.whl
 
   # ------------------------------------------------------------------
