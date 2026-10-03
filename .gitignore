@@ -41,4 +41,4 @@ site/
 
 # OS
 Thumbs.db
-.windows/
+.windows/coverage.xml
