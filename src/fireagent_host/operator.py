@@ -17,15 +17,13 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import os
 import socket
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from .secure_host import SecureHost
 from .registry import HostRegistry
+from .secure_host import SecureHost
 
 logger = logging.getLogger("fireagent.remote.operator")
 
@@ -41,8 +39,8 @@ _mock_ssh = None
 
 def _import_ssh():
     global _ssh_transport, _remote_manager, _key_deployer
-    from . import ssh_transport as _st
     from . import remote_manager as _rm
+    from . import ssh_transport as _st
 
     _ssh_transport = _st
     _remote_manager = _rm
@@ -270,8 +268,8 @@ class Operator:
             if cidr is None:
                 raise ValueError("Cannot auto-detect network. Specify a CIDR range.")
 
-        import ipaddress
         import concurrent.futures
+        import ipaddress
         import socket as _socket
 
         network = ipaddress.IPv4Network(cidr, strict=False)

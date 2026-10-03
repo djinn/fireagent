@@ -3,13 +3,12 @@
 from __future__ import annotations
 
 import asyncio
-import time
 
 import pytest
+from httpx import ASGITransport, AsyncClient
 
 from fireagent_api.app import app
 from fireagent_api.services import SandboxService
-from httpx import ASGITransport, AsyncClient
 
 
 # ---------------------------------------------------------------------------

@@ -12,7 +12,6 @@ import json
 import logging
 import os
 import socket
-import subprocess
 import time
 from pathlib import Path
 from typing import Any
@@ -60,7 +59,7 @@ class FirecrackerAPI:
     @classmethod
     def from_tcp(
         cls, host: str = "127.0.0.1", port: int = 0, timeout: float = 10.0
-    ) -> "FirecrackerAPI":
+    ) -> FirecrackerAPI:
         """Create a client connected over TCP (for platforms without AF_UNIX)."""
         api = cls.__new__(cls)
         api._sock_path = f"tcp://{host}:{port}"
@@ -93,7 +92,7 @@ class FirecrackerAPI:
             f"Content-Length: {content_length}\r\n"
             f"\r\n"
             f"{payload}"
-        ).encode("utf-8")
+        ).encode()
 
         try:
             if self._use_unix:
@@ -144,7 +143,7 @@ class FirecrackerAPI:
                 return json.loads(body_bytes.decode("utf-8"))
             return {"status": status_code}
 
-        except socket.timeout:
+        except TimeoutError:
             raise FirecrackerNotReadyError(
                 f"Firecracker socket at {self._sock_path} timed out after {self._timeout}s"
             )
@@ -399,7 +398,7 @@ class FirecrackerAPI:
     # ------------------------------------------------------------------
     # Context manager
     # ------------------------------------------------------------------
-    def __enter__(self) -> "FirecrackerAPI":
+    def __enter__(self) -> FirecrackerAPI:
         return self
 
     def __exit__(self, *args: Any) -> None:

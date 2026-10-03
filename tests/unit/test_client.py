@@ -1,16 +1,8 @@
 """Unit tests for the Fireagent SDK client."""
 
-import json
-import os
-import time
-from unittest.mock import MagicMock, patch
-
-import httpx
 import pytest
 
 from fireagent import (
-    CommandOomKilledError,
-    CommandTimeoutError,
     FireagentClient,
     Sandbox,
     set_api_key,
@@ -213,7 +205,7 @@ class TestValidation:
             SandboxCreateRequest(image="ubuntu:24.04", vcpus=1, memory_mib=32, disk_mib=256)
 
     def test_network_policy_validation(self) -> None:
-        from fireagent_api.models import NetworkRule, NetworkPolicy
+        from fireagent_api.models import NetworkPolicy, NetworkRule
 
         # Valid rule
         rule = NetworkRule(action="allow", protocol="tcp", destination="github.com", port=443)

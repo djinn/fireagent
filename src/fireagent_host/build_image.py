@@ -17,9 +17,7 @@ import hashlib
 import logging
 import os
 import shutil
-import stat
 import subprocess
-import sys
 import tempfile
 import urllib.request
 from pathlib import Path

@@ -2,11 +2,7 @@
 
 from __future__ import annotations
 
-import json
-import subprocess
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from fireagent_guest.agent import (
     execute_command,
@@ -118,7 +114,6 @@ class TestSerialChannel:
 
     def test_serial_import(self) -> None:
         """Verify serial import handling (not required in unit test)."""
-        from fireagent_guest.agent import serial as s
 
         # In unit tests, serial is None (not installed)
         # In production, serial would be available

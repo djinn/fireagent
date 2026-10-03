@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import json
 import os
 import tempfile
 from pathlib import Path
@@ -13,7 +12,6 @@ import yaml
 from click.testing import CliRunner
 
 from fireagent.cli import (
-    DEFAULT_CONFIG,
     _emit_lines,
     _table_lines,
     cli,

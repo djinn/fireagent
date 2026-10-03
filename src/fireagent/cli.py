@@ -676,7 +676,7 @@ def host_generate_key(obj: Config, key_path: str | None):
     operator = _get_operator(obj)
     try:
         path = operator.generate_key(key_path)
-        click.echo(f"Generated SSH key pair:")
+        click.echo("Generated SSH key pair:")
         click.echo(f"  Private: {path}")
         click.echo(f"  Public:  {path}.pub")
     except FileExistsError as exc:
@@ -744,7 +744,7 @@ def host_resource_usage(obj: Config, host_id: str):
         sys.exit(1)
 
 
-def _get_operator(obj: Config) -> "Operator":
+def _get_operator(obj: Config) -> Operator:
     """Lazy-init and cache an Operator instance."""
     from fireagent_host.operator import Operator
 

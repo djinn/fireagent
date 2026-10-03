@@ -9,7 +9,6 @@ This demonstrates how an agent harness might use Fireagent:
 """
 
 import fireagent as fa
-import json
 
 
 def main() -> None:

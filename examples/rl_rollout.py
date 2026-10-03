@@ -9,7 +9,6 @@ This demonstrates how an RL training loop might use Fireagent:
 """
 
 import asyncio
-import random
 import time
 
 import fireagent as fa
@@ -74,7 +73,7 @@ async def main() -> None:
     total_time = max(r["elapsed"] for r in results)
     failed = [r for r in results if r["exit_code"] != 0]
 
-    print(f"Rollout complete:")
+    print("Rollout complete:")
     print(f"  Episodes:     {N_EPISODES}")
     print(f"  Completed:    {len(results) - len(failed)}")
     print(f"  Failed:       {len(failed)}")

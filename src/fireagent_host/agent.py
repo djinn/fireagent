@@ -3,13 +3,8 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import logging
 import os
-import signal
-import time
-from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger("fireagent.agent")
 

@@ -2,13 +2,9 @@
 
 from __future__ import annotations
 
-import subprocess
-from unittest.mock import MagicMock, patch
-
 import pytest
 
-from fireagent.exceptions import NetworkDenialError
-from fireagent.models import CommandResult, SandboxStatus
+from fireagent.models import CommandResult
 
 
 # ---------------------------------------------------------------------------

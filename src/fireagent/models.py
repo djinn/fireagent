@@ -27,7 +27,7 @@ class CommandResult:
     """Whether the command was killed by OOM."""
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "CommandResult":
+    def from_dict(cls, data: dict[str, Any]) -> CommandResult:
         return cls(
             stdout=data.get("stdout", ""),
             stderr=data.get("stderr", ""),
@@ -65,7 +65,7 @@ class SandboxStatus:
     effective_limits: dict | None = None
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SandboxStatus":
+    def from_dict(cls, data: dict[str, Any]) -> SandboxStatus:
         return cls(
             sandbox_id=data.get("id", ""),
             state=data.get("state", "unknown"),

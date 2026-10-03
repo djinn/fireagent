@@ -9,8 +9,6 @@ In either mode, the service provides the same interface to the API layer.
 from __future__ import annotations
 
 import asyncio
-import time
-import uuid
 from datetime import datetime, timezone
 from typing import Any
 
@@ -215,7 +213,7 @@ class SandboxService:
                     self._transition(sandbox_id, "ready")
                     _executions[sandbox_id].append(result)
                     return result
-            except Exception as exc:
+            except Exception:
                 # Fall through to direct execution
                 pass
 

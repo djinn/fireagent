@@ -12,7 +12,6 @@ import logging
 import os
 import socket
 import threading
-import time
 from pathlib import Path
 from typing import Any
 
@@ -87,7 +86,7 @@ class MockFirecrackerServer:
             try:
                 conn, _ = self._server.accept()  # type: ignore[union-attr]
                 threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
-            except socket.timeout:
+            except TimeoutError:
                 continue
             except OSError:
                 break
@@ -180,7 +179,7 @@ class MockFirecrackerServer:
             f"Content-Length: {len(body)}\r\n"
             f"\r\n"
             f"{body}"
-        ).encode("utf-8")
+        ).encode()
 
 
 class MockFirecrackerProcess:

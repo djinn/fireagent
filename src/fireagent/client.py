@@ -6,8 +6,6 @@ import asyncio
 import json
 import os
 import time
-import uuid
-from datetime import datetime
 from typing import Any
 
 import httpx
@@ -39,7 +37,7 @@ API_KEY_ENV_VAR = "FIREAGENT_API_KEY"
 class Sandbox:
     """Represents a Fireagent sandbox and exposes lifecycle operations."""
 
-    def __init__(self, client: "FireagentClient", sandbox_id: str) -> None:
+    def __init__(self, client: FireagentClient, sandbox_id: str) -> None:
         self._client = client
         self.id = sandbox_id
 

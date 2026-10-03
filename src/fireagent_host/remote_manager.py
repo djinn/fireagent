@@ -12,14 +12,10 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import os
-import tempfile
-import time
-from pathlib import Path
 from typing import Any
 
 from .secure_host import SecureHost
-from .ssh_transport import SSHConnection, SSHTransport, SSHCommandResult, shlex_quote
+from .ssh_transport import SSHConnection, SSHTransport
 
 logger = logging.getLogger("fireagent.remote.manager")
 

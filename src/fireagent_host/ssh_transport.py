@@ -10,14 +10,12 @@ Provides a thin wrapper around asyncssh for:
 from __future__ import annotations
 
 import asyncio
-import io
 import logging
 import os
-import re
-import tempfile
 import time
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from .secure_host import SecureHost
 
@@ -65,7 +63,7 @@ class SSHTransport:
             print(result.stdout)
     """
 
-    _instances: dict[str, "SSHConnection"] = {}
+    _instances: dict[str, SSHConnection] = {}
 
     @classmethod
     async def connect(
@@ -75,7 +73,7 @@ class SSHTransport:
         timeout: float = 15.0,
         keepalive_interval: float = 15.0,
         max_retries: int = 2,
-    ) -> "SSHConnection":
+    ) -> SSHConnection:
         """Connect to a remote host.
 
         Returns a connection from the pool or creates a new one.

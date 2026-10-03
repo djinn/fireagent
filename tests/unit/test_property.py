@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from datetime import datetime, timezone
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from fireagent.client import FireagentClient
 from fireagent.exceptions import FireagentError, map_http_status

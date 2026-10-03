@@ -11,9 +11,7 @@ import asyncio
 import json
 import logging
 import os
-import socket
 import time
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger("fireagent.host.guest_channel")

@@ -104,7 +104,7 @@ class SecureHost:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SecureHost":
+    def from_dict(cls, data: dict[str, Any]) -> SecureHost:
         """Deserialize from a dictionary."""
         return cls(
             hostname=data["hostname"],

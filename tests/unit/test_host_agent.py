@@ -2,16 +2,12 @@
 
 from __future__ import annotations
 
-import os
-import signal
-import subprocess
-import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, PropertyMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from fireagent_agent.agent import HostAgent, MicroVMManager, DEFAULT_CONFIG
+from fireagent_agent.agent import DEFAULT_CONFIG, HostAgent, MicroVMManager
 
 
 # ---------------------------------------------------------------------------

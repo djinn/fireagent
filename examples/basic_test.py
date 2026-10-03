@@ -1,8 +1,5 @@
 """Basic smoke test — create, exec, stop, delete."""
 
-import sys
-import time
-
 import fireagent as fa
 
 

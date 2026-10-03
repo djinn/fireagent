@@ -8,11 +8,8 @@ spawns commands, and returns results.
 import json
 import os
 import shlex
-import signal
 import subprocess
 import sys
-import time
-from pathlib import Path
 
 try:
     import serial  # pyserial  # noqa: F401

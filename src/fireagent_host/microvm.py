@@ -6,18 +6,14 @@ Supports both real Firecracker and MockFirecracker for CI/testing.
 
 from __future__ import annotations
 
-import asyncio
 import logging
-import os
 import shutil
-import signal
 import subprocess
-import tempfile
 import time
 from pathlib import Path
 from typing import Any
 
-from .firecracker_api import FirecrackerAPI, FirecrackerNotReadyError
+from .firecracker_api import FirecrackerAPI
 from .guest_channel import GuestAgentChannel, InProcessChannel
 from .mock_firecracker import MockFirecrackerProcess
 
