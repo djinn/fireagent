@@ -20,17 +20,19 @@ logger = logging.getLogger("fireagent.host.mock_firecracker")
 
 
 class MockFirecrackerServer:
-    """Simulates the Firecracker REST API over a Unix socket.
+    """Simulates the Firecracker REST API.
 
-    Responds to all API endpoints with realistic responses. Tracks
-    machine configuration state so callers can verify what was set.
+    Uses Unix sockets where available (Linux), falls back to TCP
+    localhost on platforms without AF_UNIX (macOS, Windows).
     """
 
     def __init__(self, sock_path: str | Path) -> None:
         self._sock_path = str(sock_path)
+        self._use_unix = hasattr(socket, "AF_UNIX") and os.name != "nt"
         self._server: socket.socket | None = None
         self._thread: threading.Thread | None = None
         self._running = False
+        self.port: int = 0
         self.state: dict[str, Any] = {
             "machine_config": {},
             "boot_source": {},
@@ -42,22 +44,28 @@ class MockFirecrackerServer:
 
     def start(self) -> None:
         """Start the mock server in a background thread."""
-        # Remove stale socket
-        if os.path.exists(self._sock_path):
-            os.unlink(self._sock_path)
+        if self._use_unix:
+            # Unix socket (Linux)
+            if os.path.exists(self._sock_path):
+                os.unlink(self._sock_path)
+            parent = Path(self._sock_path).parent
+            parent.mkdir(parents=True, exist_ok=True)
+            self._server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._server.bind(self._sock_path)
+        else:
+            # TCP fallback (macOS, Windows)
+            self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self._server.bind(("127.0.0.1", 0))
+            self.port = self._server.getsockname()[1]
 
-        parent = Path(self._sock_path).parent
-        parent.mkdir(parents=True, exist_ok=True)
-
-        self._server = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self._server.bind(self._sock_path)
         self._server.listen(5)
         self._server.settimeout(1.0)
         self._running = True
 
         self._thread = threading.Thread(target=self._serve, daemon=True)
         self._thread.start()
-        logger.info("Mock Firecracker listening at %s", self._sock_path)
+        loc = self._sock_path if self._use_unix else f"127.0.0.1:{self.port}"
+        logger.info("Mock Firecracker listening at %s", loc)
 
     def stop(self) -> None:
         """Stop the mock server and clean up."""
@@ -67,7 +75,7 @@ class MockFirecrackerServer:
                 self._server.close()
             except Exception:
                 pass
-        if os.path.exists(self._sock_path):
+        if self._use_unix and os.path.exists(self._sock_path):
             try:
                 os.unlink(self._sock_path)
             except Exception:

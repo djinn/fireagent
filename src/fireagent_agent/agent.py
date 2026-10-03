@@ -66,8 +66,14 @@ class MicroVMManager:
         disk_mib: int,
     ) -> bool:
         """Launch a Firecracker microVM for the given sandbox."""
-        logger.info("Creating sandbox %s (image=%s, vcpus=%d, memory=%dMiB, disk=%dMiB)",
-                     sandbox_id, image, vcpus, memory_mib, disk_mib)
+        logger.info(
+            "Creating sandbox %s (image=%s, vcpus=%d, memory=%dMiB, disk=%dMiB)",
+            sandbox_id,
+            image,
+            vcpus,
+            memory_mib,
+            disk_mib,
+        )
 
         sandbox_dir = self.workspace_dir / sandbox_id
         sandbox_dir.mkdir(parents=True, exist_ok=True)
@@ -80,7 +86,15 @@ class MicroVMManager:
         try:
             if shutil.which("qemu-img"):
                 subprocess.run(
-                    ["qemu-img", "create", "-f", "qcow2", "-o", f"size={disk_mib}MiB", str(workspace_img)],
+                    [
+                        "qemu-img",
+                        "create",
+                        "-f",
+                        "qcow2",
+                        "-o",
+                        f"size={disk_mib}MiB",
+                        str(workspace_img),
+                    ],
                     check=True,
                     capture_output=True,
                 )
@@ -107,12 +121,18 @@ class MicroVMManager:
         # Launch Firecracker
         cmd = [
             self.config["firecracker"]["bin_path"],
-            "--api-sock", str(api_socket),
-            "--kernel", str(kernel_path),
-            "--rootfs", str(rootfs_path),
-            "--vcpus", str(vcpus),
-            "--mem", str(memory_mib),
-            "--drives", f"{str(workspace_img)}:rw",
+            "--api-sock",
+            str(api_socket),
+            "--kernel",
+            str(kernel_path),
+            "--rootfs",
+            str(rootfs_path),
+            "--vcpus",
+            str(vcpus),
+            "--mem",
+            str(memory_mib),
+            "--drives",
+            f"{str(workspace_img)}:rw",
         ]
 
         try:
@@ -126,7 +146,9 @@ class MicroVMManager:
             logger.info("Firecracker process started for sandbox %s (PID=%d)", sandbox_id, proc.pid)
             return True
         except FileNotFoundError:
-            logger.error("Firecracker binary not found at %s", self.config["firecracker"]["bin_path"])
+            logger.error(
+                "Firecracker binary not found at %s", self.config["firecracker"]["bin_path"]
+            )
             return False
         except Exception as exc:
             logger.error("Failed to launch Firecracker for %s: %s", sandbox_id, exc)
@@ -160,6 +182,7 @@ class MicroVMManager:
         sandbox_dir = self.workspace_dir / sandbox_id
         if sandbox_dir.exists():
             import shutil
+
             shutil.rmtree(sandbox_dir)
             logger.info("Deleted sandbox directory %s", sandbox_dir)
         return True
@@ -338,6 +361,7 @@ class HostAgent:
     def _get_cpu_usage() -> float:
         try:
             import psutil
+
             return psutil.cpu_percent(interval=0.5)
         except ImportError:
             return 0.0
@@ -347,16 +371,24 @@ class HostAgent:
         try:
             stat = os.statvfs("/")
             return stat.f_blocks * stat.f_frsize // (1024**3)
-        except OSError:
-            return 100
+        except (OSError, AttributeError):
+            try:
+                import shutil
+                return shutil.disk_usage("/").total // (1024**3)
+            except Exception:
+                return 100
 
     @staticmethod
     def _get_free_disk() -> int:
         try:
             stat = os.statvfs("/")
             return stat.f_bfree * stat.f_frsize // (1024**3)
-        except OSError:
-            return 50
+        except (OSError, AttributeError):
+            try:
+                import shutil
+                return shutil.disk_usage("/").free // (1024**3)
+            except Exception:
+                return 50
 
 
 # ---------------------------------------------------------------------------
@@ -366,13 +398,18 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Fireagent Host Agent")
-    parser.add_argument("--config", type=str, default="/etc/fireagent/agent.conf",
-                        help="Path to agent configuration file")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="/etc/fireagent/agent.conf",
+        help="Path to agent configuration file",
+    )
     args = parser.parse_args()
 
     config = DEFAULT_CONFIG.copy()
     if os.path.exists(args.config):
         import configparser
+
         cfg = configparser.ConfigParser()
         cfg.read(args.config)
         # Merge config file values into defaults
@@ -380,7 +417,9 @@ def main() -> None:
             if section in config:
                 config[section].update(dict(cfg.items(section)))
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s"
+    )
 
     agent = HostAgent(config)
 

@@ -182,6 +182,7 @@ def download_busybox(dest_dir: Path) -> Path:
 
     # Extract
     import tarfile
+
     with tarfile.open(tarball) as tf:
         tf.extractall(dest_dir)
 
@@ -197,22 +198,89 @@ def setup_busybox(rootfs: Path, busybox_bin: Path) -> None:
 
     # Create standard applet symlinks
     applets = [
-        "sh", "bash", "ls", "cp", "mv", "rm", "mkdir", "rmdir", "cat",
-        "echo", "printf", "true", "false", "sleep", "test", "[",
-        "ps", "kill", "mount", "umount", "df", "du", "dmesg",
-        "grep", "sed", "awk", "cut", "sort", "uniq", "wc",
-        "head", "tail", "find", "xargs", "tee", "env",
-        "chmod", "chown", "chgrp", "ln", "readlink", "stat",
-        "pwd", "cd", "which", "whoami", "id", "groups",
-        "tar", "gzip", "gunzip", "bzip2", "unxz",
-        "ping", "ifconfig", "route", "netstat", "nslookup",
-        "vi", "less", "more", "clear", "reset",
-        "adduser", "deluser", "passwd",
-        "date", "cal", "time", "uptime",
-        "hostname", "dnsdomainname",
-        "pidof", "pgrep", "pkill", "fuser",
-        "cpio", "dd", "sync", "truncate",
-        "watch", "logger", "printenv",
+        "sh",
+        "bash",
+        "ls",
+        "cp",
+        "mv",
+        "rm",
+        "mkdir",
+        "rmdir",
+        "cat",
+        "echo",
+        "printf",
+        "true",
+        "false",
+        "sleep",
+        "test",
+        "[",
+        "ps",
+        "kill",
+        "mount",
+        "umount",
+        "df",
+        "du",
+        "dmesg",
+        "grep",
+        "sed",
+        "awk",
+        "cut",
+        "sort",
+        "uniq",
+        "wc",
+        "head",
+        "tail",
+        "find",
+        "xargs",
+        "tee",
+        "env",
+        "chmod",
+        "chown",
+        "chgrp",
+        "ln",
+        "readlink",
+        "stat",
+        "pwd",
+        "cd",
+        "which",
+        "whoami",
+        "id",
+        "groups",
+        "tar",
+        "gzip",
+        "gunzip",
+        "bzip2",
+        "unxz",
+        "ping",
+        "ifconfig",
+        "route",
+        "netstat",
+        "nslookup",
+        "vi",
+        "less",
+        "more",
+        "clear",
+        "reset",
+        "adduser",
+        "deluser",
+        "passwd",
+        "date",
+        "cal",
+        "time",
+        "uptime",
+        "hostname",
+        "dnsdomainname",
+        "pidof",
+        "pgrep",
+        "pkill",
+        "fuser",
+        "cpio",
+        "dd",
+        "sync",
+        "truncate",
+        "watch",
+        "logger",
+        "printenv",
     ]
     for applet in applets:
         link = rootfs / "bin" / applet
@@ -230,10 +298,25 @@ def setup_busybox(rootfs: Path, busybox_bin: Path) -> None:
 
 def setup_directories(rootfs: Path) -> None:
     """Create standard Linux filesystem directories."""
-    for d in ["bin", "sbin", "usr/bin", "usr/sbin", "etc", "etc/init.d",
-              "dev", "dev/pts", "proc", "sys", "tmp", "root",
-              "var", "var/log", "var/tmp",
-              "usr/local/bin", "usr/local/lib"]:
+    for d in [
+        "bin",
+        "sbin",
+        "usr/bin",
+        "usr/sbin",
+        "etc",
+        "etc/init.d",
+        "dev",
+        "dev/pts",
+        "proc",
+        "sys",
+        "tmp",
+        "root",
+        "var",
+        "var/log",
+        "var/tmp",
+        "usr/local/bin",
+        "usr/local/lib",
+    ]:
         (rootfs / d).mkdir(parents=True, exist_ok=True)
     # Workspace mount point
     (rootfs / "workspace").mkdir(exist_ok=True)
@@ -252,16 +335,10 @@ def setup_etc(rootfs: Path) -> None:
     (rootfs / "etc" / "hostname").write_text("fireagent-guest\n")
 
     # hosts
-    (rootfs / "etc" / "hosts").write_text(
-        "127.0.0.1 localhost\n"
-        "127.0.1.1 fireagent-guest\n"
-    )
+    (rootfs / "etc" / "hosts").write_text("127.0.0.1 localhost\n" "127.0.1.1 fireagent-guest\n")
 
     # inittab
-    (rootfs / "etc" / "inittab").write_text(
-        "::sysinit:/etc/init.d/rcS\n"
-        "::askfirst:-/bin/sh\n"
-    )
+    (rootfs / "etc" / "inittab").write_text("::sysinit:/etc/init.d/rcS\n" "::askfirst:-/bin/sh\n")
 
     # init.d/rcS
     rc_s = rootfs / "etc" / "init.d" / "rcS"
@@ -313,6 +390,7 @@ def create_initramfs(rootfs: Path, output_path: Path) -> Path:
 
         # Gzip compress
         import gzip
+
         with open(output_path, "wb") as f:
             compressed = gzip.compress(cpio_out, compresslevel=6)
             f.write(compressed)
@@ -382,11 +460,13 @@ def build_image(
     # Write metadata
     meta_path = output_dir / f"{image_name}-{version}.meta.json"
     import json
+
     meta_path.write_text(json.dumps(metadata, indent=2))
     logger.info("Image metadata written to %s", meta_path)
 
-    logger.info("Build complete: %s (%s, %d bytes, sha256=%s)",
-                image_name, version, img_size, digest[:16])
+    logger.info(
+        "Build complete: %s (%s, %d bytes, sha256=%s)", image_name, version, img_size, digest[:16]
+    )
 
     return metadata
 
@@ -397,8 +477,7 @@ def download_kernel(output_dir: Path, version: str = "6.8-microvm") -> Path:
     Uses the public Firecracker CI kernel builds.
     """
     kernel_url = (
-        f"https://s3.amazonaws.com/spec.ccfc.min/ci-artifacts/"
-        f"kernels/x86_64/vversion}/vmlinux"
+        f"https://s3.amazonaws.com/spec.ccfc.min/ci-artifacts/" f"kernels/x86_64/{version}/vmlinux"
     )
     kernel_path = output_dir / "vmlinux"
 
@@ -423,16 +502,17 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="Build a minimal Firecracker guest image for Fireagent",
     )
-    parser.add_argument("--output", "-o", default="/artifacts/images",
-                        help="Output directory for built images")
-    parser.add_argument("--name", default="fireagent-mini",
-                        help="Image name")
-    parser.add_argument("--version", default="0.1.0",
-                        help="Image version")
-    parser.add_argument("--kernel-version", default="6.8-microvm",
-                        help="Kernel version to download (or 'skip' to skip)")
-    parser.add_argument("--skip-kernel", action="store_true",
-                        help="Skip kernel download")
+    parser.add_argument(
+        "--output", "-o", default="/artifacts/images", help="Output directory for built images"
+    )
+    parser.add_argument("--name", default="fireagent-mini", help="Image name")
+    parser.add_argument("--version", default="0.1.0", help="Image version")
+    parser.add_argument(
+        "--kernel-version",
+        default="6.8-microvm",
+        help="Kernel version to download (or 'skip' to skip)",
+    )
+    parser.add_argument("--skip-kernel", action="store_true", help="Skip kernel download")
     args = parser.parse_args()
 
     output_dir = ensure_dir(args.output)
@@ -453,7 +533,9 @@ def main() -> None:
     )
 
     logger.info("Image ready at %s", meta["path"])
-    logger.info("  Size:     %d bytes (%.1f MiB)", meta["size_bytes"], meta["size_bytes"] / 1024 / 1024)
+    logger.info(
+        "  Size:     %d bytes (%.1f MiB)", meta["size_bytes"], meta["size_bytes"] / 1024 / 1024
+    )
     logger.info("  SHA256:   %s", meta["sha256"])
     if kernel_path:
         logger.info("  Kernel:   %s", kernel_path)

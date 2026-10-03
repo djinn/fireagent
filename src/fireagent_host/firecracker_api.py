@@ -46,11 +46,27 @@ class FirecrackerAPI:
         POST /actions  {"action_type": "InstanceStart"}
 
     Reference: https://github.com/firecracker-microvm/firecracker/blob/main/docs/api.md
+
+    On platforms without AF_UNIX (macOS, Windows), use from_tcp() for mock testing.
     """
 
     def __init__(self, api_sock_path: str | Path, timeout: float = 10.0) -> None:
         self._sock_path = str(api_sock_path)
         self._timeout = timeout
+        self._use_unix = hasattr(socket, "AF_UNIX") and os.name != "nt"
+        self._host = "127.0.0.1"
+        self._port = 0
+
+    @classmethod
+    def from_tcp(cls, host: str = "127.0.0.1", port: int = 0, timeout: float = 10.0) -> "FirecrackerAPI":
+        """Create a client connected over TCP (for platforms without AF_UNIX)."""
+        api = cls.__new__(cls)
+        api._sock_path = f"tcp://{host}:{port}"
+        api._timeout = timeout
+        api._use_unix = False
+        api._host = host
+        api._port = port
+        return api
 
     # ------------------------------------------------------------------
     # Raw HTTP-like request over Unix socket
@@ -78,9 +94,14 @@ class FirecrackerAPI:
         ).encode("utf-8")
 
         try:
-            sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            sock.settimeout(self._timeout)
-            sock.connect(self._sock_path)
+            if self._use_unix:
+                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                sock.settimeout(self._timeout)
+                sock.connect(self._sock_path)
+            else:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(self._timeout)
+                sock.connect((self._host, self._port))
             sock.sendall(request)
 
             # Read response
@@ -150,7 +171,9 @@ class FirecrackerAPI:
     @property
     def is_ready(self) -> bool:
         """Check if the Firecracker API socket is available."""
-        return os.path.exists(self._sock_path)
+        if self._use_unix:
+            return os.path.exists(self._sock_path)
+        return True if self._port > 0 else os.path.exists(self._sock_path)
 
     def wait_ready(self, timeout: float = 5.0) -> bool:
         """Wait until the API socket appears."""
@@ -336,7 +359,11 @@ class FirecrackerAPI:
 
         logger.info(
             "Booting microVM: kernel=%s rootfs=%s vcpus=%d mem=%dMiB workspace=%s",
-            kernel_path, rootfs_path, vcpus, memory_mib, workspace_path,
+            kernel_path,
+            rootfs_path,
+            vcpus,
+            memory_mib,
+            workspace_path,
         )
 
         # 1. Machine config

@@ -10,7 +10,11 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from fireagent_host.firecracker_api import FirecrackerAPI, FirecrackerAPIError, FirecrackerNotReadyError
+from fireagent_host.firecracker_api import (
+    FirecrackerAPI,
+    FirecrackerAPIError,
+    FirecrackerNotReadyError,
+)
 from fireagent_host.mock_firecracker import MockFirecrackerProcess, MockFirecrackerServer
 
 
@@ -30,15 +34,24 @@ class TestMockFirecrackerServer:
         yield s
         s.stop()
 
+    def _api(self, server: MockFirecrackerServer) -> FirecrackerAPI:
+        """Get an API client connected to the mock server (handles Unix/TCP)."""
+        if server._use_unix:
+            api = FirecrackerAPI(server._sock_path)
+        else:
+            api = FirecrackerAPI.from_tcp(host="127.0.0.1", port=server.port)
+        return api
+
     def test_start_stop(self, sock_path: Path) -> None:
         server = MockFirecrackerServer(sock_path)
         server.start()
-        assert sock_path.exists()
+        assert server.port > 0 or sock_path.exists(), "Server should be listening"
         server.stop()
-        assert not sock_path.exists()
+        if server._use_unix:
+            assert not sock_path.exists(), "Socket should be cleaned up"
 
     def test_machine_config(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         assert api.wait_ready(timeout=1.0)
 
         result = api.set_machine_config(vcpus=2, mem_size_mib=1024)
@@ -49,7 +62,7 @@ class TestMockFirecrackerServer:
         assert config["mem_size_mib"] == 1024
 
     def test_boot_source(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.set_boot_source(
@@ -59,7 +72,7 @@ class TestMockFirecrackerServer:
         assert result["status"] == 204
 
     def test_drives(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.set_root_drive(path="/test/rootfs.ext4", is_read_only=True)
@@ -69,7 +82,7 @@ class TestMockFirecrackerServer:
         assert result["status"] == 204
 
     def test_instance_start_stop(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.instance_start()
@@ -82,7 +95,7 @@ class TestMockFirecrackerServer:
         assert server.state["vm_state"] == "stopping"
 
     def test_full_boot_sequence(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.configure_and_boot(
@@ -102,21 +115,23 @@ class TestMockFirecrackerServer:
         assert server.state["vm_state"] == "running"
 
     def test_vsock_config(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.configure_vsock(guest_port=8001)
         assert result["status"] == 204
 
     def test_network_config(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
-        result = api.configure_network(iface_id="eth0", host_ip="169.254.1.1", guest_ip="169.254.1.2")
+        result = api.configure_network(
+            iface_id="eth0", host_ip="169.254.1.1", guest_ip="169.254.1.2"
+        )
         assert result["status"] == 204
 
     def test_snapshot(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         result = api.create_snapshot(
@@ -126,14 +141,14 @@ class TestMockFirecrackerServer:
         assert result["status"] == 204
 
     def test_not_found(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         with pytest.raises(FirecrackerAPIError, match="not_found"):
             api._request("GET", "/nonexistent")
 
     def test_state_tracking(self, server: MockFirecrackerServer) -> None:
-        api = FirecrackerAPI(server._sock_path)
+        api = self._api(server)
         api.wait_ready(timeout=1.0)
 
         # Track all state changes
@@ -177,6 +192,7 @@ class TestInProcessChannel:
     @pytest.fixture
     def channel(self):
         from fireagent_host.guest_channel import InProcessChannel
+
         return InProcessChannel()
 
     @pytest.mark.asyncio
@@ -237,6 +253,7 @@ class TestMicroVMManager:
             image_dir.mkdir(parents=True, exist_ok=True)
 
             from fireagent_host.microvm import MicroVMManager
+
             m = MicroVMManager(config)
             # Force mock mode for testing
             m._use_mock = True
@@ -259,7 +276,9 @@ class TestMicroVMManager:
         await manager.create_sandbox(
             sandbox_id="sb-test002",
             image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         result = await manager.exec_command("sb-test002", "echo 'test'")
         assert result["exit_code"] == 0
@@ -269,7 +288,9 @@ class TestMicroVMManager:
         await manager.create_sandbox(
             sandbox_id="sb-test003",
             image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         healthy = await manager.health_check("sb-test003")
         assert healthy is True
@@ -279,7 +300,9 @@ class TestMicroVMManager:
         await manager.create_sandbox(
             sandbox_id="sb-test004",
             image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         result = await manager.stop_sandbox("sb-test004")
         assert result is True
@@ -295,7 +318,9 @@ class TestMicroVMManager:
         await manager.create_sandbox(
             sandbox_id="sb-test005",
             image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         result = await manager.delete_sandbox("sb-test005")
         assert result is True
@@ -306,7 +331,9 @@ class TestMicroVMManager:
             await manager.create_sandbox(
                 sandbox_id=f"sb-test{i:03d}",
                 image="ubuntu:24.04",
-                vcpus=1, memory_mib=128, disk_mib=256,
+                vcpus=1,
+                memory_mib=128,
+                disk_mib=256,
             )
         assert manager.active_sandbox_count == 3
         await manager.stop_all()

@@ -119,6 +119,7 @@ class TestSerialChannel:
     def test_serial_import(self) -> None:
         """Verify serial import handling (not required in unit test)."""
         from fireagent_guest.agent import serial as s
+
         # In unit tests, serial is None (not installed)
         # In production, serial would be available
 
@@ -127,11 +128,14 @@ class TestMainFunction:
     def test_main_imports(self) -> None:
         """Verify the main function imports without error."""
         import fireagent_guest.agent as agent
+
         assert hasattr(agent, "main")
         assert callable(agent.main)
 
-    def test_handle_request_invalid_json(self) -> None:
-        """Test request parsing edge cases."""
+    def test_request_echo(self) -> None:
+        """Test a basic request round-trip."""
         from fireagent_guest.agent import handle_request
-        result = handle_request({"command": "exit 0"})
+
+        result = handle_request({"command": "echo hello", "execution_timeout_seconds": 5})
         assert result["exit_code"] == 0
+        assert "hello" in result.get("stdout", "")
