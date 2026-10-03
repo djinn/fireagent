@@ -1,0 +1,1 @@
+"""Fireagent API — CLI entrypoint."""

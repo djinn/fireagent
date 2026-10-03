@@ -1,0 +1,1 @@
+"""Fireagent API routes package."""
