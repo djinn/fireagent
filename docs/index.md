@@ -5,6 +5,13 @@
 
 **Fireagent** is an open-source platform that creates, manages, and destroys **Firecracker microVM sandboxes** through a clean API and Python SDK. Each sandbox is an isolated Linux environment — with persistent state, resource controls, and network policies — designed for agent harnesses, RL training rollouts, code evaluation, and anything that needs a *trustworthy, disposable computer*.
 
+The design is architecturally inspired by **DeepSeek Elastic Compute (DSec)**
+[[arXiv:2609.22978]](https://arxiv.org/abs/2609.22978), the production sandbox
+infrastructure that serves ~3 million sandboxes daily across 160 nodes at DeepSeek.
+Fireagent distills DSec's core principles — burst-aware orchestration, multi-backend
+isolation, stateful session semantics, and RL co-design — into an open-source platform
+focused on microVM-based isolation via Firecracker.
+
 <div class="badge-row">
 <span class="badge">⚡ Firecracker-powered</span>
 <span class="badge">🔒 microVM isolation</span>

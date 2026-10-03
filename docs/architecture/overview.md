@@ -1,5 +1,11 @@
 # System Design
 
+This architecture is informed by **DeepSeek Elastic Compute (DSec)**
+[[arXiv:2609.22978]](https://arxiv.org/abs/2609.22978), which establishes the
+design pattern of separating sandbox lifecycle management from execution,
+supporting burst creation patterns, stateful sessions with controlled lifetimes,
+and co-design with RL training frameworks.
+
 ## High-level architecture
 
 Fireagent separates three concerns that are often conflated in sandbox platforms:
