@@ -43,6 +43,7 @@ def _import_ssh():
     global _ssh_transport, _remote_manager, _key_deployer
     from . import ssh_transport as _st
     from . import remote_manager as _rm
+
     _ssh_transport = _st
     _remote_manager = _rm
     _key_deployer = _st.KeyDeployer
@@ -51,6 +52,7 @@ def _import_ssh():
 def _import_mock():
     global _mock_ssh
     from . import mock_ssh as _ms
+
     _mock_ssh = _ms
 
 
@@ -89,7 +91,9 @@ class Operator:
 
         logger.info(
             "Operator initialized (mode=%s, mock=%s, hosts=%d)",
-            mode, self._use_mock, self._registry.count,
+            mode,
+            self._use_mock,
+            self._registry.count,
         )
 
     @staticmethod
@@ -101,6 +105,7 @@ class Operator:
         # auto: mock if asyncssh missing
         try:
             import asyncssh  # noqa: F401
+
             return False
         except ImportError:
             return True
@@ -127,9 +132,14 @@ class Operator:
     ) -> SecureHost:
         """Add a remote host to the registry."""
         host = SecureHost(
-            hostname=hostname, port=port, user=user,
-            key_path=key_path, label=label, fingerprint=fingerprint,
-            tags=tags or {}, status="registered",
+            hostname=hostname,
+            port=port,
+            user=user,
+            key_path=key_path,
+            label=label,
+            fingerprint=fingerprint,
+            tags=tags or {},
+            status="registered",
         )
         self._registry.add(host)
         logger.info("Host added: %s (%s)", host.id, host.display_name)
@@ -159,7 +169,11 @@ class Operator:
     # ------------------------------------------------------------------
 
     def deploy_keys(
-        self, host_id: str, *, key_path: str | None = None, password: str | None = None,
+        self,
+        host_id: str,
+        *,
+        key_path: str | None = None,
+        password: str | None = None,
     ) -> dict[str, Any]:
         """Deploy SSH public key to a remote host."""
         host = self._registry.get(host_id)
@@ -180,8 +194,10 @@ class Operator:
         verified = self._run_async(deployer.verify(host))
 
         return {
-            "host_id": host_id, "key": pubkey, "verified": verified,
-            "result": result.stdout if hasattr(result, 'stdout') else str(result),
+            "host_id": host_id,
+            "key": pubkey,
+            "verified": verified,
+            "result": result.stdout if hasattr(result, "stdout") else str(result),
         }
 
     def generate_key(self, key_path: str | None = None) -> str:
@@ -212,24 +228,41 @@ class Operator:
             self._run_async(conn.disconnect())
 
         # Update host
-        for key in ["cpu_cores", "total_memory_mib", "total_disk_gb",
-                     "free_disk_gb", "has_kvm", "firecracker_version",
-                     "kernel_version", "os_version"]:
+        for key in [
+            "cpu_cores",
+            "total_memory_mib",
+            "total_disk_gb",
+            "free_disk_gb",
+            "has_kvm",
+            "firecracker_version",
+            "kernel_version",
+            "os_version",
+        ]:
             if key in capabilities:
                 setattr(host, key, capabilities[key])
         host.last_heartbeat_at = datetime.now(timezone.utc)
         host.status = "connected" if capabilities.get("firecracker_version") else "partial"
         self._registry.add(host)
 
-        return {"host_id": host_id, "hostname": host.hostname, "status": host.status, **capabilities}
+        return {
+            "host_id": host_id,
+            "hostname": host.hostname,
+            "status": host.status,
+            **capabilities,
+        }
 
     def health_all(self) -> list[dict[str, Any]]:
         """Run health checks on all registered hosts."""
         return [self.host_health(h.id) for h in self._registry.list()]
 
     def discover_hosts(
-        self, *, cidr: str | None = None, port: int = 22, user: str = "fireagent",
-        timeout: float = 3.0, max_workers: int = 20,
+        self,
+        *,
+        cidr: str | None = None,
+        port: int = 22,
+        user: str = "fireagent",
+        timeout: float = 3.0,
+        max_workers: int = 20,
     ) -> list[SecureHost]:
         """Discover Firecracker hosts on the network."""
         if cidr is None:
@@ -285,6 +318,7 @@ class Operator:
             if self._use_mock:
                 _import_mock()
                 from .remote_manager import RemoteMicroVMManager
+
                 m = RemoteMicroVMManager(host)
                 # Inject mock connection
                 conn = _mock_ssh.MockSSHConnection(host)
@@ -293,6 +327,7 @@ class Operator:
                 self._managers[host.id] = m
             else:
                 from .remote_manager import RemoteMicroVMManager
+
                 m = RemoteMicroVMManager(host)
                 self._managers[host.id] = m
         return self._managers[host.id]
@@ -313,6 +348,7 @@ class Operator:
             loop = asyncio.get_running_loop()
             if loop.is_running():
                 import concurrent.futures
+
                 with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
                     future = pool.submit(asyncio.run, coro)
                     return future.result()
@@ -321,33 +357,67 @@ class Operator:
         return asyncio.run(coro)
 
     def create_sandbox(
-        self, host_id: str, sandbox_id: str, image: str,
-        vcpus: int, memory_mib: int, disk_mib: int,
+        self,
+        host_id: str,
+        sandbox_id: str,
+        image: str,
+        vcpus: int,
+        memory_mib: int,
+        disk_mib: int,
     ) -> dict[str, Any]:
         """Create a sandbox on a remote host."""
-        return self._run_async(self._create_sandbox_async(
-            host_id, sandbox_id, image, vcpus, memory_mib, disk_mib,
-        ))
+        return self._run_async(
+            self._create_sandbox_async(
+                host_id,
+                sandbox_id,
+                image,
+                vcpus,
+                memory_mib,
+                disk_mib,
+            )
+        )
 
     async def _create_sandbox_async(
-        self, host_id, sandbox_id, image, vcpus, memory_mib, disk_mib,
+        self,
+        host_id,
+        sandbox_id,
+        image,
+        vcpus,
+        memory_mib,
+        disk_mib,
     ) -> dict[str, Any]:
         manager = await self._connect_manager(host_id)
         return await manager.create_sandbox(
-            sandbox_id=sandbox_id, image=image,
-            vcpus=vcpus, memory_mib=memory_mib, disk_mib=disk_mib,
+            sandbox_id=sandbox_id,
+            image=image,
+            vcpus=vcpus,
+            memory_mib=memory_mib,
+            disk_mib=disk_mib,
         )
 
     def exec_command(
-        self, host_id: str, sandbox_id: str, command: str,
-        *, working_dir=None, environment=None, execution_timeout_seconds=None, stdin=None,
+        self,
+        host_id: str,
+        sandbox_id: str,
+        command: str,
+        *,
+        working_dir=None,
+        environment=None,
+        execution_timeout_seconds=None,
+        stdin=None,
     ) -> dict[str, Any]:
         """Execute a command in a sandbox on a remote host."""
-        return self._run_async(self._exec_command_async(
-            host_id, sandbox_id, command,
-            working_dir=working_dir, environment=environment,
-            execution_timeout_seconds=execution_timeout_seconds, stdin=stdin,
-        ))
+        return self._run_async(
+            self._exec_command_async(
+                host_id,
+                sandbox_id,
+                command,
+                working_dir=working_dir,
+                environment=environment,
+                execution_timeout_seconds=execution_timeout_seconds,
+                stdin=stdin,
+            )
+        )
 
     async def _exec_command_async(self, host_id, sandbox_id, command, **kw):
         manager = await self._connect_manager(host_id)

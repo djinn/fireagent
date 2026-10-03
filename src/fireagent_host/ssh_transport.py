@@ -184,25 +184,32 @@ class SSHConnection:
                 self.host.connected_at = self._dt_now()
                 logger.info(
                     "Connected to %s (attempt %d/%d)",
-                    self.host.id, attempt + 1, max_retries + 1,
+                    self.host.id,
+                    attempt + 1,
+                    max_retries + 1,
                 )
                 return
             except asyncssh.SSHConnectionError as exc:
                 last_error = exc
                 logger.warning(
                     "Connection failed to %s (attempt %d/%d): %s",
-                    self.host.id, attempt + 1, max_retries + 1, exc,
+                    self.host.id,
+                    attempt + 1,
+                    max_retries + 1,
+                    exc,
                 )
                 if attempt < max_retries:
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
             except asyncio.TimeoutError as exc:
                 last_error = exc
                 logger.warning(
                     "Connection timeout to %s (attempt %d/%d)",
-                    self.host.id, attempt + 1, max_retries + 1,
+                    self.host.id,
+                    attempt + 1,
+                    max_retries + 1,
                 )
                 if attempt < max_retries:
-                    await asyncio.sleep(2 ** attempt)
+                    await asyncio.sleep(2**attempt)
 
         self.host.status = "disconnected"
         raise SSHConnectionError(
@@ -442,8 +449,11 @@ class SSHConnection:
             "total_disk_gb": int(results.get("total_disk_gb", 0) or 0),
             "free_disk_gb": int(results.get("free_disk_gb", 0) or 0),
             "has_kvm": results.get("has_kvm") == "true",
-            "firecracker_version": results.get("firecracker_version")
-                if results.get("firecracker_version") != "not_installed" else None,
+            "firecracker_version": (
+                results.get("firecracker_version")
+                if results.get("firecracker_version") != "not_installed"
+                else None
+            ),
             "kernel_version": results.get("kernel_version"),
             "os_version": results.get("os_version"),
         }
@@ -454,15 +464,21 @@ class SSHConnection:
         self.host.last_heartbeat_at = self._dt_now()
         self.host.status = "connected" if results.get("firecracker_version") else "partial"
 
-        logger.info("Health check for %s: %d cores, %d MiB, KVM=%s, FC=%s",
-                     self.host.id, parsed["cpu_cores"], parsed["total_memory_mib"],
-                     parsed["has_kvm"], parsed["firecracker_version"] or "missing")
+        logger.info(
+            "Health check for %s: %d cores, %d MiB, KVM=%s, FC=%s",
+            self.host.id,
+            parsed["cpu_cores"],
+            parsed["total_memory_mib"],
+            parsed["has_kvm"],
+            parsed["firecracker_version"] or "missing",
+        )
 
         return parsed
 
     @staticmethod
     def _dt_now():
         from datetime import datetime, timezone
+
         return datetime.now(timezone.utc)
 
 
@@ -506,10 +522,13 @@ class KeyDeployer:
         # Try ssh-copy-id first (handles permissions, dir creation, etc.)
         try:
             import subprocess
+
             cmd = [
                 "ssh-copy-id",
-                "-o", "StrictHostKeyChecking=accept-new",
-                "-p", str(host.port),
+                "-o",
+                "StrictHostKeyChecking=accept-new",
+                "-p",
+                str(host.port),
                 f"{host.user}@{host.hostname}",
             ]
             if host.key_path:
@@ -562,6 +581,7 @@ class KeyDeployer:
             raise FileExistsError(f"Key already exists at {path}")
 
         import subprocess
+
         subprocess.run(
             ["ssh-keygen", "-t", "ed25519", "-f", path, "-N", ""],
             capture_output=True,

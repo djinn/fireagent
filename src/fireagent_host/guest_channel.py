@@ -188,9 +188,7 @@ class VsockChannel(GuestAgentChannel):
             except (ConnectionRefusedError, OSError, asyncio.TimeoutError) as exc:
                 last_exc = exc
                 await asyncio.sleep(0.1)
-        raise RuntimeError(
-            f"Cannot connect to vsock proxy on port {self._host_port}: {last_exc}"
-        )
+        raise RuntimeError(f"Cannot connect to vsock proxy on port {self._host_port}: {last_exc}")
 
     async def disconnect(self) -> None:
         if self._writer:

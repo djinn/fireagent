@@ -97,7 +97,9 @@ class MockSSHConnection:
     ) -> MockSSHCommandResult:
         if not self._connected:
             return MockSSHCommandResult(
-                stdout="", stderr="Not connected", exit_code=-1,
+                stdout="",
+                stderr="Not connected",
+                exit_code=-1,
                 command=command,
             )
 
@@ -110,17 +112,27 @@ class MockSSHConnection:
         if cmd == "nproc 2>/dev/null || echo 1":
             return MockSSHCommandResult(stdout=str(self._capabilities["cpu_cores"]), command=cmd)
         if "free -m" in cmd:
-            return MockSSHCommandResult(stdout=f"Mem:{self._capabilities['total_memory_mib']}", command=cmd)
+            return MockSSHCommandResult(
+                stdout=f"Mem:{self._capabilities['total_memory_mib']}", command=cmd
+            )
         if "df -BG" in cmd:
-            return MockSSHCommandResult(stdout=f"/ {self._capabilities['total_disk_gb']}G\n", command=cmd)
+            return MockSSHCommandResult(
+                stdout=f"/ {self._capabilities['total_disk_gb']}G\n", command=cmd
+            )
         if "test -c /dev/kvm" in cmd:
-            return MockSSHCommandResult(stdout="true" if self._capabilities["has_kvm"] else "false", command=cmd)
+            return MockSSHCommandResult(
+                stdout="true" if self._capabilities["has_kvm"] else "false", command=cmd
+            )
         if "firecracker --version" in cmd:
-            return MockSSHCommandResult(stdout=self._capabilities.get("firecracker_version", ""), command=cmd)
+            return MockSSHCommandResult(
+                stdout=self._capabilities.get("firecracker_version", ""), command=cmd
+            )
         if "uname -r" in cmd:
             return MockSSHCommandResult(stdout=self._capabilities["kernel_version"], command=cmd)
         if "cat /etc/os-release" in cmd:
-            return MockSSHCommandResult(stdout=f'PRETTY_NAME="{self._capabilities["os_version"]}"', command=cmd)
+            return MockSSHCommandResult(
+                stdout=f'PRETTY_NAME="{self._capabilities["os_version"]}"', command=cmd
+            )
         if "echo 'auth-ok'" in cmd:
             return MockSSHCommandResult(stdout="auth-ok", command=cmd)
         if "echo 'health-ok'" in cmd:
@@ -132,6 +144,7 @@ class MockSSHConnection:
             self._files[path] = "directory"
             # Track sandbox directories for list_sandboxes support
             import re
+
             for part in cmd.split():
                 for pattern in ["/var/fireagent/sandboxes/", "/tmp/fireagent/"]:
                     if pattern in part:
@@ -144,6 +157,7 @@ class MockSSHConnection:
         if "cat > " in cmd and "<< 'PAYLOAD'" in cmd:
             # Extract file path and payload
             import re
+
             m = re.search(r"cat > (\S+) << 'PAYLOAD'", cmd)
             if m:
                 path = m.group(1)
@@ -157,6 +171,7 @@ class MockSSHConnection:
         # File write (heredoc)
         if "cat > " in cmd and "<< 'STARTSCRIPT'" in cmd:
             import re
+
             m = re.search(r"cat > (\S+) << 'STARTSCRIPT'", cmd)
             if m:
                 path = m.group(1)
@@ -196,6 +211,7 @@ class MockSSHConnection:
         # echo payload
         if cmd.startswith("echo '") and cmd.count("'") >= 2:
             import re
+
             m = re.search(r"echo '(.+)' > ", cmd)
             if m:
                 pass
@@ -216,14 +232,20 @@ class MockSSHConnection:
         mkdir: bool = False,
     ) -> MockSSHCommandResult:
         self._files[remote_path] = f"mock upload from {local_path}"
-        return MockSSHCommandResult(stdout=f"Uploaded {local_path} → {remote_path}", command=f"scp {local_path} {remote_path}")
+        return MockSSHCommandResult(
+            stdout=f"Uploaded {local_path} → {remote_path}",
+            command=f"scp {local_path} {remote_path}",
+        )
 
     async def download(
         self,
         remote_path: str,
         local_path: str,
     ) -> MockSSHCommandResult:
-        return MockSSHCommandResult(stdout=f"Downloaded {remote_path} → {local_path}", command=f"scp {remote_path} {local_path}")
+        return MockSSHCommandResult(
+            stdout=f"Downloaded {remote_path} → {local_path}",
+            command=f"scp {remote_path} {local_path}",
+        )
 
     async def health_check(self) -> dict[str, Any]:
         return dict(self._capabilities)

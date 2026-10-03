@@ -44,14 +44,22 @@ class TestMicroVMManager:
         mock_popen.return_value = mock_proc
 
         result = manager.create_sandbox(
-            "sb-test001", "ubuntu:24.04", vcpus=1, memory_mib=512, disk_mib=1024,
+            "sb-test001",
+            "ubuntu:24.04",
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         assert result is True
         assert manager.active_sandbox_count == 1
 
     def test_create_sandbox_no_image(self, manager: MicroVMManager) -> None:
         result = manager.create_sandbox(
-            "sb-test002", "nonexistent:1.0", vcpus=1, memory_mib=512, disk_mib=1024,
+            "sb-test002",
+            "nonexistent:1.0",
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         assert result is False
 
@@ -120,6 +128,7 @@ class TestHostAgent:
     @patch("httpx.AsyncClient")
     def test_register(self, mock_httpx, agent: HostAgent) -> None:
         import asyncio
+
         mock_resp = MagicMock()
         mock_resp.is_success = True
         mock_client = MagicMock()
@@ -131,6 +140,7 @@ class TestHostAgent:
     @patch("httpx.AsyncClient")
     def test_heartbeat(self, mock_httpx, agent: HostAgent) -> None:
         import asyncio
+
         mock_resp = MagicMock()
         mock_resp.is_success = True
         mock_client = MagicMock()
@@ -142,6 +152,7 @@ class TestHostAgent:
     @patch("httpx.AsyncClient")
     def test_register_failure(self, mock_httpx, agent: HostAgent) -> None:
         import asyncio
+
         mock_resp = MagicMock()
         mock_resp.is_success = False
         mock_resp.status_code = 500
@@ -154,6 +165,7 @@ class TestHostAgent:
     @patch("httpx.AsyncClient")
     def test_register_connection_error(self, mock_httpx, agent: HostAgent) -> None:
         import asyncio
+
         mock_client = MagicMock()
         mock_client.post.side_effect = Exception("Connection refused")
         mock_httpx.return_value = mock_client
@@ -193,6 +205,7 @@ class TestHostAgent:
 # ---------------------------------------------------------------------------
 def teardown_module():
     import shutil
+
     for d in ["/tmp/fa-test-workspace", "/tmp/fa-test-images"]:
         if Path(d).exists():
             shutil.rmtree(d)

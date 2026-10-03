@@ -374,6 +374,7 @@ class HostAgent:
         except (OSError, AttributeError):
             try:
                 import shutil
+
                 return shutil.disk_usage("/").total // (1024**3)
             except Exception:
                 return 100
@@ -386,6 +387,7 @@ class HostAgent:
         except (OSError, AttributeError):
             try:
                 import shutil
+
                 return shutil.disk_usage("/").free // (1024**3)
             except Exception:
                 return 50

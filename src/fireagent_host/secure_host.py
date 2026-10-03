@@ -2,6 +2,7 @@
 
 Tracks hostname, port, auth method, fingerprint, and capabilities.
 """
+
 from __future__ import annotations
 
 import ipaddress

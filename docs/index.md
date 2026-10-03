@@ -100,6 +100,6 @@ These design principles — full transparency — are documented across this sit
 
 ---
 
-**Fireagent** is built by [Supreet Sethi](https://djinn.ai) at [Spacesword AI](https://djinn.ai). Licensed [MIT](https://github.com/djinn/fireagent/blob/main/LICENSE).
+**Fireagent** is built by [Supreet Sethi](https://spaceswordai.com) at [Spacesword AI](https://spaceswordai.com). Licensed [MIT](https://github.com/djinn/fireagent/blob/main/LICENSE).
 
 *"The first hard problem is not 'how tiny can the Linux image be?' It is how reliably the platform creates, contains, observes, and cleans up thousands of stateful guests."* – Supreet Sethi

@@ -56,7 +56,7 @@
 
 - **GitHub Issues**: https://github.com/djinn/fireagent/issues
 - **GitHub Discussions**: https://github.com/djinn/fireagent/discussions
-- **Spacesword AI**: https://djinn.ai
+- **Spacesword AI**: https://spaceswordai.com
 
 ## License
 

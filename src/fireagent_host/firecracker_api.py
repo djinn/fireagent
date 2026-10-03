@@ -58,7 +58,9 @@ class FirecrackerAPI:
         self._port = 0
 
     @classmethod
-    def from_tcp(cls, host: str = "127.0.0.1", port: int = 0, timeout: float = 10.0) -> "FirecrackerAPI":
+    def from_tcp(
+        cls, host: str = "127.0.0.1", port: int = 0, timeout: float = 10.0
+    ) -> "FirecrackerAPI":
         """Create a client connected over TCP (for platforms without AF_UNIX)."""
         api = cls.__new__(cls)
         api._sock_path = f"tcp://{host}:{port}"

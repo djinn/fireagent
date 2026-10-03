@@ -54,7 +54,9 @@ class TestConfig:
         assert cfg["api"]["base_url"] == "http://test:8000"
 
     def test_env_overrides(self) -> None:
-        with patch.dict(os.environ, {"FIREAGENT_API_KEY": "env-key", "FIREAGENT_BASE_URL": "http://env:8000"}):
+        with patch.dict(
+            os.environ, {"FIREAGENT_API_KEY": "env-key", "FIREAGENT_BASE_URL": "http://env:8000"}
+        ):
             cfg = load_config()
             assert cfg["api"]["api_key"] == "env-key"
             assert cfg["api"]["base_url"] == "http://env:8000"
@@ -69,6 +71,7 @@ class TestConfig:
 
     def test_deep_merge(self) -> None:
         from fireagent.cli import _deep_merge
+
         base: dict = {"a": 1, "b": {"c": 2, "d": 3}}
         override: dict = {"b": {"c": 99, "e": 4}}
         _deep_merge(base, override)
@@ -178,23 +181,46 @@ class TestCLI:
     @patch("fireagent.cli.FireagentClient")
     def test_sandbox_create(self, mock_client_cls, runner: CliRunner) -> None:
         from fireagent import Sandbox
+
         mock_sb = MagicMock(spec=Sandbox)
         mock_sb.id = "sb-test001"
         mock_sb.status.return_value = SandboxStatus(
-            sandbox_id="sb-test001", state="ready", image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024, host="host-01",
+            sandbox_id="sb-test001",
+            state="ready",
+            image="ubuntu:24.04",
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
+            host="host-01",
         )
         mock_client_cls.return_value.create.return_value = mock_sb
-        result = runner.invoke(cli, ["sandboxes", "create", "--image", "ubuntu:24.04", "--vcpus", "2", "--wait", "--no-wait"])
+        result = runner.invoke(
+            cli,
+            [
+                "sandboxes",
+                "create",
+                "--image",
+                "ubuntu:24.04",
+                "--vcpus",
+                "2",
+                "--wait",
+                "--no-wait",
+            ],
+        )
         assert result.exit_code == 0
 
     @patch("fireagent.cli.FireagentClient")
     def test_sandbox_list(self, mock_client_cls, runner: CliRunner) -> None:
         from fireagent import Sandbox
+
         mock_sb = MagicMock(spec=Sandbox)
         mock_sb.status.return_value = SandboxStatus(
-            sandbox_id="sb-1", state="ready", image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            sandbox_id="sb-1",
+            state="ready",
+            image="ubuntu:24.04",
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         mock_client_cls.return_value.list.return_value = [mock_sb]
         result = runner.invoke(cli, ["sandboxes", "ls"])
@@ -203,6 +229,7 @@ class TestCLI:
     @patch("fireagent.cli.FireagentClient")
     def test_sandbox_get_not_found(self, mock_client_cls, runner: CliRunner) -> None:
         from fireagent.exceptions import NotFoundError
+
         mock_client_cls.return_value._get_sandbox.side_effect = NotFoundError("not found")
         result = runner.invoke(cli, ["sandboxes", "get", "sb-nonexistent"])
         assert result.exit_code == 1
@@ -211,8 +238,11 @@ class TestCLI:
     @patch("fireagent.cli.FireagentClient")
     def test_sandbox_exec(self, mock_client_cls, runner: CliRunner) -> None:
         from fireagent.models import CommandResult
+
         mock_client_cls.return_value._exec.return_value = CommandResult(
-            stdout="hello\n", stderr="", exit_code=0,
+            stdout="hello\n",
+            stderr="",
+            exit_code=0,
         )
         result = runner.invoke(cli, ["sandboxes", "exec", "sb-test001", "--command", "echo hello"])
         assert result.exit_code == 0, f"Exit {result.exit_code}: {result.output}"
@@ -245,8 +275,12 @@ class TestCLI:
     def test_sandbox_wait(self, mock_client_cls, runner: CliRunner) -> None:
         mock_sb = MagicMock()
         mock_sb.wait_for.return_value = SandboxStatus(
-            sandbox_id="sb-test001", state="ready", image="ubuntu:24.04",
-            vcpus=1, memory_mib=512, disk_mib=1024,
+            sandbox_id="sb-test001",
+            state="ready",
+            image="ubuntu:24.04",
+            vcpus=1,
+            memory_mib=512,
+            disk_mib=1024,
         )
         mock_client_cls.return_value.get.return_value = mock_sb
         result = runner.invoke(cli, ["sandboxes", "wait", "sb-test001", "ready", "--timeout", "5"])
@@ -255,6 +289,7 @@ class TestCLI:
     @patch("fireagent.cli.FireagentClient")
     def test_sandbox_wait_timeout(self, mock_client_cls, runner: CliRunner) -> None:
         from fireagent.exceptions import SandboxTimeoutError
+
         mock_sb = MagicMock()
         mock_sb.wait_for.side_effect = SandboxTimeoutError("timed out")
         mock_client_cls.return_value.get.return_value = mock_sb

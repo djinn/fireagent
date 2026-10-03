@@ -35,14 +35,17 @@ class TestFullLifecycleE2E:
 
     async def test_full_lifecycle(self, client: AsyncClient) -> None:
         # 1. Create sandbox
-        resp = await client.post("/v1/sandboxes", json={
-            "image": "ubuntu:24.04",
-            "vcpus": 1,
-            "memory_mib": 256,
-            "disk_mib": 512,
-            "ttl_seconds": 300,
-            "labels": {"test": "e2e"},
-        })
+        resp = await client.post(
+            "/v1/sandboxes",
+            json={
+                "image": "ubuntu:24.04",
+                "vcpus": 1,
+                "memory_mib": 256,
+                "disk_mib": 512,
+                "ttl_seconds": 300,
+                "labels": {"test": "e2e"},
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         sandbox_id = data["id"]
@@ -88,7 +91,7 @@ class TestFilePersistence:
 
     def test_file_persistence(self, service: SandboxService) -> None:
         """File persistence is enforced by microVM workspace volumes.
-        
+
         The in-memory service runs commands via subprocess on the host,
         so files written in one exec are in the host /tmp, not the sandbox.
         True persistence requires Firecracker microVMs. This test verifies
@@ -113,15 +116,19 @@ class TestConcurrentOperations:
 
     async def test_concurrent_sandboxes(self, client: AsyncClient) -> None:
         """Create 5 sandboxes concurrently and run commands in each."""
+
         async def create_and_exec(i: int) -> dict:
-            resp = await client.post("/v1/sandboxes", json={
-                "image": "ubuntu:24.04",
-                "vcpus": 1,
-                "memory_mib": 128,
-                "disk_mib": 256,
-                "ttl_seconds": 120,
-                "labels": {"concurrent-test": str(i)},
-            })
+            resp = await client.post(
+                "/v1/sandboxes",
+                json={
+                    "image": "ubuntu:24.04",
+                    "vcpus": 1,
+                    "memory_mib": 128,
+                    "disk_mib": 256,
+                    "ttl_seconds": 120,
+                    "labels": {"concurrent-test": str(i)},
+                },
+            )
             data = resp.json()
             sandbox_id = data["id"]
 
@@ -148,22 +155,36 @@ class TestConcurrentOperations:
     async def test_sequential_isolation(self, client: AsyncClient) -> None:
         """Sandbox A's files should not be visible to Sandbox B."""
         # Create sandbox A, write file
-        resp = await client.post("/v1/sandboxes", json={
-            "image": "ubuntu:24.04", "vcpus": 1, "memory_mib": 128, "disk_mib": 256,
-        })
+        resp = await client.post(
+            "/v1/sandboxes",
+            json={
+                "image": "ubuntu:24.04",
+                "vcpus": 1,
+                "memory_mib": 128,
+                "disk_mib": 256,
+            },
+        )
         sb_a = resp.json()["id"]
-        await client.post(f"/v1/sandboxes/{sb_a}/exec", json={
-            "command": "echo 'secret-data' > /workspace/secret.txt"
-        })
+        await client.post(
+            f"/v1/sandboxes/{sb_a}/exec",
+            json={"command": "echo 'secret-data' > /workspace/secret.txt"},
+        )
 
         # Create sandbox B, try to read file
-        resp = await client.post("/v1/sandboxes", json={
-            "image": "ubuntu:24.04", "vcpus": 1, "memory_mib": 128, "disk_mib": 256,
-        })
+        resp = await client.post(
+            "/v1/sandboxes",
+            json={
+                "image": "ubuntu:24.04",
+                "vcpus": 1,
+                "memory_mib": 128,
+                "disk_mib": 256,
+            },
+        )
         sb_b = resp.json()["id"]
-        result = await client.post(f"/v1/sandboxes/{sb_b}/exec", json={
-            "command": "cat /workspace/secret.txt 2>&1 || echo 'no-access'"
-        })
+        result = await client.post(
+            f"/v1/sandboxes/{sb_b}/exec",
+            json={"command": "cat /workspace/secret.txt 2>&1 || echo 'no-access'"},
+        )
         output = result.json()["stdout"]
         # Should not see the file (simulated — in prod this is enforced by Firecracker)
         assert True  # Isolation is enforced by microVM boundaries
@@ -177,9 +198,15 @@ class TestResourceLimitsE2E:
 
     async def test_command_timeout(self, client: AsyncClient) -> None:
         """A command that exceeds timeout should be killed."""
-        resp = await client.post("/v1/sandboxes", json={
-            "image": "ubuntu:24.04", "vcpus": 1, "memory_mib": 128, "disk_mib": 256,
-        })
+        resp = await client.post(
+            "/v1/sandboxes",
+            json={
+                "image": "ubuntu:24.04",
+                "vcpus": 1,
+                "memory_mib": 128,
+                "disk_mib": 256,
+            },
+        )
         sandbox_id = resp.json()["id"]
 
         resp = await client.post(
@@ -192,13 +219,16 @@ class TestResourceLimitsE2E:
 
     async def test_resource_limits_in_response(self, client: AsyncClient) -> None:
         """Effective limits should be returned in sandbox response."""
-        resp = await client.post("/v1/sandboxes", json={
-            "image": "ubuntu:24.04",
-            "vcpus": 2,
-            "memory_mib": 1024,
-            "disk_mib": 2048,
-            "ttl_seconds": 3600,
-        })
+        resp = await client.post(
+            "/v1/sandboxes",
+            json={
+                "image": "ubuntu:24.04",
+                "vcpus": 2,
+                "memory_mib": 1024,
+                "disk_mib": 2048,
+                "ttl_seconds": 3600,
+            },
+        )
         assert resp.status_code == 201
         data = resp.json()
         limits = data.get("effective_limits", {})

@@ -50,7 +50,9 @@ class RemoteMicroVMManager:
         await manager.delete_sandbox("sb-1")
     """
 
-    def __init__(self, host: SecureHost, *, workspace_base: str = "/var/fireagent/sandboxes") -> None:
+    def __init__(
+        self, host: SecureHost, *, workspace_base: str = "/var/fireagent/sandboxes"
+    ) -> None:
         self.host = host
         self.workspace_base = workspace_base
         self._conn: SSHConnection | None = None
@@ -63,9 +65,7 @@ class RemoteMicroVMManager:
     @property
     def conn(self) -> SSHConnection:
         if self._conn is None or not self._conn.is_alive:
-            raise RemoteMicroVMError(
-                f"Not connected to {self.host.id}. Call connect() first."
-            )
+            raise RemoteMicroVMError(f"Not connected to {self.host.id}. Call connect() first.")
         return self._conn
 
     async def disconnect(self) -> None:
@@ -146,46 +146,48 @@ class RemoteMicroVMManager:
         # We use a combination of a startup script and socat for socket forwarding
         # Since we can't directly interact with Unix sockets over SSH, we use
         # a remote agent that forwards the Firecracker API over TCP.
-        startup_script = "\\n".join([
-            "#!/bin/sh",
-            f"cd {sandbox_dir}",
-            "# Start Firecracker",
-            f"/usr/bin/firecracker --api-sock {api_socket} &",
-            "FC_PID=$!",
-            "# Wait for socket",
-            f'for i in $(seq 1 50); do test -S {api_socket} && break; sleep 0.1; done',
-            "# Configure via REST API using curl to Unix socket",
-            f'curl -s -X PUT --unix-socket {api_socket} '
-            f'-H "Content-Type: application/json" '
-            f'-d \'{{"vcpus":{vcpus},"mem_size_mib":{memory_mib}}}\' '
-            f'"http://localhost/machine-config"',
-            "",
-            f'curl -s -X PUT --unix-socket {api_socket} '
-            f'-H "Content-Type: application/json" '
-            f'-d \'{{"kernel_image_path":"{kernel}","boot_args":"console=ttyS0 reboot=k panic=1 pci=off"}}\' '
-            f'"http://localhost/boot-source"',
-            "",
-            f'curl -s -X PUT --unix-socket {api_socket} '
-            f'-H "Content-Type: application/json" '
-            f'-d \'{{"drive_id":"root","path_on_host":"{rootfs}","is_read_only":true,"is_root_device":true}}\' '
-            f'"http://localhost/drives/root"',
-            "",
-            f'curl -s -X PUT --unix-socket {api_socket} '
-            f'-H "Content-Type: application/json" '
-            f'-d \'{{"drive_id":"workspace","path_on_host":"{workspace_img}","is_read_only":false,"is_root_device":false}}\' '
-            f'"http://localhost/drives/workspace"',
-            "",
-            "# Start the VM",
-            f'curl -s -X POST --unix-socket {api_socket} '
-            f'-H "Content-Type: application/json" '
-            f'-d \'{{"action_type":"InstanceStart"}}\' '
-            f'"http://localhost/actions"',
-            "",
-            "# Signal ready",
-            'echo "=== FIRECRACKER READY ==="',
-            "# Keep alive",
-            "wait $FC_PID",
-        ])
+        startup_script = "\\n".join(
+            [
+                "#!/bin/sh",
+                f"cd {sandbox_dir}",
+                "# Start Firecracker",
+                f"/usr/bin/firecracker --api-sock {api_socket} &",
+                "FC_PID=$!",
+                "# Wait for socket",
+                f"for i in $(seq 1 50); do test -S {api_socket} && break; sleep 0.1; done",
+                "# Configure via REST API using curl to Unix socket",
+                f"curl -s -X PUT --unix-socket {api_socket} "
+                f'-H "Content-Type: application/json" '
+                f'-d \'{{"vcpus":{vcpus},"mem_size_mib":{memory_mib}}}\' '
+                f'"http://localhost/machine-config"',
+                "",
+                f"curl -s -X PUT --unix-socket {api_socket} "
+                f'-H "Content-Type: application/json" '
+                f'-d \'{{"kernel_image_path":"{kernel}","boot_args":"console=ttyS0 reboot=k panic=1 pci=off"}}\' '
+                f'"http://localhost/boot-source"',
+                "",
+                f"curl -s -X PUT --unix-socket {api_socket} "
+                f'-H "Content-Type: application/json" '
+                f'-d \'{{"drive_id":"root","path_on_host":"{rootfs}","is_read_only":true,"is_root_device":true}}\' '
+                f'"http://localhost/drives/root"',
+                "",
+                f"curl -s -X PUT --unix-socket {api_socket} "
+                f'-H "Content-Type: application/json" '
+                f'-d \'{{"drive_id":"workspace","path_on_host":"{workspace_img}","is_read_only":false,"is_root_device":false}}\' '
+                f'"http://localhost/drives/workspace"',
+                "",
+                "# Start the VM",
+                f"curl -s -X POST --unix-socket {api_socket} "
+                f'-H "Content-Type: application/json" '
+                f'-d \'{{"action_type":"InstanceStart"}}\' '
+                f'"http://localhost/actions"',
+                "",
+                "# Signal ready",
+                'echo "=== FIRECRACKER READY ==="',
+                "# Keep alive",
+                "wait $FC_PID",
+            ]
+        )
 
         # Write startup script and run it in background
         startup_path = f"{sandbox_dir}/start.sh"
@@ -202,11 +204,17 @@ class RemoteMicroVMManager:
         await asyncio.sleep(1.0)
 
         # Check if it started
-        result = await self.conn.run(f"grep -q 'READY' {sandbox_dir}/firecracker.log 2>/dev/null && echo ready || echo starting")
+        result = await self.conn.run(
+            f"grep -q 'READY' {sandbox_dir}/firecracker.log 2>/dev/null && echo ready || echo starting"
+        )
 
         logger.info(
             "Remote microVM %s created on %s (image=%s, %d vCPU, %d MiB)",
-            sandbox_id, self.host.id, image, vcpus, memory_mib,
+            sandbox_id,
+            self.host.id,
+            image,
+            vcpus,
+            memory_mib,
         )
 
         return {
@@ -235,25 +243,25 @@ class RemoteMicroVMManager:
         sandbox_dir = f"{self.workspace_base}/{sandbox_id}"
 
         # Build the command payload
-        payload = json.dumps({
-            "command": command,
-            "working_dir": working_dir,
-            "environment": environment or {},
-            "execution_timeout_seconds": execution_timeout_seconds or 300,
-            "stdin": stdin or "",
-        })
+        payload = json.dumps(
+            {
+                "command": command,
+                "working_dir": working_dir,
+                "environment": environment or {},
+                "execution_timeout_seconds": execution_timeout_seconds or 300,
+                "stdin": stdin or "",
+            }
+        )
 
         # Write request to a temp file
         req_file = f"{sandbox_dir}/req.json"
-        await self.conn.run(
-            f"cat > {req_file} << 'PAYLOAD'\n{payload}\nPAYLOAD\n"
-        )
+        await self.conn.run(f"cat > {req_file} << 'PAYLOAD'\n{payload}\nPAYLOAD\n")
 
         # Execute via the guest agent (serial port /tmp/ttyS0)
         cmd = (
             f"echo '{payload}' > {sandbox_dir}/guest_input 2>/dev/null; "
             f"cat {sandbox_dir}/guest_output 2>/dev/null | head -1 || "
-            f"echo '{{\"stdout\":\"executed_in_microvm\",\"stderr\":\"\",\"exit_code\":0}}'"
+            f'echo \'{{"stdout":"executed_in_microvm","stderr":"","exit_code":0}}\''
         )
 
         result = await self.conn.run(cmd, timeout=execution_timeout_seconds or 300)
@@ -277,7 +285,7 @@ class RemoteMicroVMManager:
         await self.conn.run(
             f"curl -s -X POST --unix-socket {api_socket} "
             f"-H 'Content-Type: application/json' "
-            f"-d '{{\"action_type\":\"SendCtrlAltDel\"}}' "
+            f'-d \'{{"action_type":"SendCtrlAltDel"}}\' '
             f"'http://localhost/actions' 2>/dev/null || true",
             timeout=5,
         )
@@ -300,24 +308,22 @@ class RemoteMicroVMManager:
 
     async def list_sandboxes(self) -> list[dict[str, Any]]:
         """List all sandboxes on the remote host."""
-        result = await self.conn.run(
-            f"ls -1 {self.workspace_base}/ 2>/dev/null || echo ''"
-        )
+        result = await self.conn.run(f"ls -1 {self.workspace_base}/ 2>/dev/null || echo ''")
         sandbox_ids = [s.strip() for s in result.stdout.split("\n") if s.strip()]
         sandboxes = []
         for sid in sandbox_ids:
-            sandboxes.append({
-                "sandbox_id": sid,
-                "host": self.host.id,
-                "sandbox_dir": f"{self.workspace_base}/{sid}",
-            })
+            sandboxes.append(
+                {
+                    "sandbox_id": sid,
+                    "host": self.host.id,
+                    "sandbox_dir": f"{self.workspace_base}/{sid}",
+                }
+            )
         return sandboxes
 
     async def get_resource_usage(self) -> dict[str, Any]:
         """Get resource usage on the remote host."""
         hc = await self.conn.health_check()
-        result = await self.conn.run(
-            f"ls -1 {self.workspace_base}/ 2>/dev/null | wc -l"
-        )
+        result = await self.conn.run(f"ls -1 {self.workspace_base}/ 2>/dev/null | wc -l")
         hc["active_sandbox_count"] = int(result.stdout.strip() or 0)
         return hc

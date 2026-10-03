@@ -44,8 +44,13 @@ class TestSecureHost:
 
     def test_to_dict_roundtrip(self) -> None:
         h = SecureHost(
-            hostname="worker-01", port=2222, user="admin",
-            label="test", cpu_cores=8, has_kvm=True, tags={"env": "prod"},
+            hostname="worker-01",
+            port=2222,
+            user="admin",
+            label="test",
+            cpu_cores=8,
+            has_kvm=True,
+            tags={"env": "prod"},
         )
         d = h.to_dict()
         h2 = SecureHost.from_dict(d)
@@ -212,6 +217,7 @@ class TestOperator:
     def operator(self):
         with tempfile.TemporaryDirectory() as tmp:
             from fireagent_host.operator import Operator
+
             op = Operator(mode="mock", registry_path=Path(tmp) / "hosts.json")
             yield op
 
@@ -284,7 +290,9 @@ class TestOperator:
             host_id=host.id,
             sandbox_id="sb-remote-001",
             image="ubuntu:24.04",
-            vcpus=2, memory_mib=1024, disk_mib=2048,
+            vcpus=2,
+            memory_mib=1024,
+            disk_mib=2048,
         )
         assert result["sandbox_id"] == "sb-remote-001"
         assert result["host"] == host.id
@@ -330,6 +338,7 @@ class TestCLIHosts:
 
     def test_hosts_help(self, runner: CliRunner) -> None:
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "--help"])
         assert result.exit_code == 0
         assert "add" in result.output
@@ -339,10 +348,14 @@ class TestCLIHosts:
     @patch("fireagent.cli._get_operator")
     def test_host_add(self, mock_op, runner: CliRunner) -> None:
         from fireagent_host.secure_host import SecureHost
+
         mock_op.return_value.add_host.return_value = SecureHost(
-            hostname="test.example.com", port=22, user="fireagent",
+            hostname="test.example.com",
+            port=22,
+            user="fireagent",
         )
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "add", "test.example.com", "--label", "test"])
         assert result.exit_code == 0
 
@@ -350,6 +363,7 @@ class TestCLIHosts:
     def test_host_remove(self, mock_op, runner: CliRunner) -> None:
         mock_op.return_value.remove_host.return_value = True
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "remove", "fireagent@test:22", "--yes"])
         assert result.exit_code == 0
         assert "removed" in result.output
@@ -357,13 +371,27 @@ class TestCLIHosts:
     @patch("fireagent.cli._get_operator")
     def test_host_list(self, mock_op, runner: CliRunner) -> None:
         from fireagent_host.secure_host import SecureHost
+
         mock_op.return_value.list_hosts.return_value = [
-            SecureHost(hostname="h1.example.com", status="connected", cpu_cores=8,
-                       total_memory_mib=32768, has_kvm=True, firecracker_version="1.2.0"),
-            SecureHost(hostname="h2.example.com", status="connected", cpu_cores=16,
-                       total_memory_mib=65536, has_kvm=True, firecracker_version="1.2.0"),
+            SecureHost(
+                hostname="h1.example.com",
+                status="connected",
+                cpu_cores=8,
+                total_memory_mib=32768,
+                has_kvm=True,
+                firecracker_version="1.2.0",
+            ),
+            SecureHost(
+                hostname="h2.example.com",
+                status="connected",
+                cpu_cores=16,
+                total_memory_mib=65536,
+                has_kvm=True,
+                firecracker_version="1.2.0",
+            ),
         ]
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "ls"])
         assert result.exit_code == 0
         assert "h1.example.com" in result.output
@@ -381,6 +409,7 @@ class TestCLIHosts:
             "firecracker_version": "1.2.0",
         }
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "status", "fireagent@test:22"])
         assert result.exit_code == 0
         assert "connected" in result.output
@@ -393,16 +422,20 @@ class TestCLIHosts:
             {"host_id": "h2", "status": "connected"},
         ]
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "health-all"])
         assert result.exit_code == 0
 
     @patch("fireagent.cli._get_operator")
     def test_host_push_keys(self, mock_op, runner: CliRunner) -> None:
         mock_op.return_value.deploy_keys.return_value = {
-            "host_id": "fireagent@test:22", "key": "ssh-ed25519 AAA...",
-            "verified": True, "result": "ok",
+            "host_id": "fireagent@test:22",
+            "key": "ssh-ed25519 AAA...",
+            "verified": True,
+            "result": "ok",
         }
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "push-keys", "fireagent@test:22"])
         assert result.exit_code == 0
         assert "Key deployed" in result.output
@@ -412,17 +445,19 @@ class TestCLIHosts:
     def test_host_generate_key(self, mock_op, runner: CliRunner) -> None:
         mock_op.return_value.generate_key.return_value = "/tmp/.ssh/id_ed25519"
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "generate-key"])
         assert result.exit_code == 0
 
     @patch("fireagent.cli._get_operator")
     def test_host_discover(self, mock_op, runner: CliRunner) -> None:
         from fireagent_host.secure_host import SecureHost
+
         mock_op.return_value.discover_hosts.return_value = [
-            SecureHost(hostname="10.0.0.1", port=22, user="fireagent",
-                       label="discovered-10.0.0.1"),
+            SecureHost(hostname="10.0.0.1", port=22, user="fireagent", label="discovered-10.0.0.1"),
         ]
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "discover", "--cidr", "10.0.0.0/30"])
         assert result.exit_code == 0
 
@@ -432,15 +467,19 @@ class TestCLIHosts:
             {"sandbox_id": "sb-remote-001", "host": "fireagent@test:22"},
         ]
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "sandboxes", "fireagent@test:22"])
         assert result.exit_code == 0
 
     @patch("fireagent.cli._get_operator")
     def test_host_resource_usage(self, mock_op, runner: CliRunner) -> None:
         mock_op.return_value.get_resource_usage.return_value = {
-            "cpu_cores": 8, "total_memory_mib": 32768, "active_sandbox_count": 3,
+            "cpu_cores": 8,
+            "total_memory_mib": 32768,
+            "active_sandbox_count": 3,
         }
         from fireagent.cli import cli
+
         result = runner.invoke(cli, ["hosts", "resource-usage", "fireagent@test:22"])
         assert result.exit_code == 0
 

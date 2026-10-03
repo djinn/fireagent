@@ -75,29 +75,37 @@ class TestNetworkPolicyEnforcement:
 class TestCommandSanitization:
     """Verify that dangerous commands are blocked at the guest agent level."""
 
-    @pytest.mark.parametrize("dangerous_cmd", [
-        "sudo ls",
-        "su - root",
-        "chroot /mnt",
-        "reboot",
-        "shutdown -h now",
-        "halt",
-        "poweroff",
-        "init 0",
-        "telinit 1",
-    ])
+    @pytest.mark.parametrize(
+        "dangerous_cmd",
+        [
+            "sudo ls",
+            "su - root",
+            "chroot /mnt",
+            "reboot",
+            "shutdown -h now",
+            "halt",
+            "poweroff",
+            "init 0",
+            "telinit 1",
+        ],
+    )
     def test_blocked_commands(self, dangerous_cmd: str) -> None:
         """Test that each dangerous command is blocked."""
         from fireagent_guest.agent import handle_request
+
         result = handle_request({"command": dangerous_cmd, "execution_timeout_seconds": 5})
         # exit_code can be -1 (blocked by guest agent) or 127 (command not found by shell)
-        assert result["exit_code"] in (-1, 127), f"Expected blocked, got exit_code={result['exit_code']}"
+        assert result["exit_code"] in (
+            -1,
+            127,
+        ), f"Expected blocked, got exit_code={result['exit_code']}"
         if result["exit_code"] == -1:
             assert "not allowed" in result["stderr"].lower()
 
     def test_safe_commands_allowed(self) -> None:
         """Verify that safe commands are not blocked."""
         from fireagent_guest.agent import handle_request
+
         safe_commands = [
             "echo 'hello'",
             "ls -la",

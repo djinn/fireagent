@@ -118,6 +118,6 @@ security(isolation): block additional private IP ranges
 
 - **Issues**: Open a GitHub issue for bugs, feature requests, and questions
 - **Discussions**: Use GitHub Discussions for design discussions and RFCs
-- **Security**: Email security@djinn.ai for security vulnerabilities
+- **Security**: Email security@spaceswordai.com for security vulnerabilities
 
 Thank you for contributing!

@@ -24,9 +24,13 @@ import click
 import yaml
 
 from fireagent import FireagentClient, __version__
-from fireagent.exceptions import FireagentError, NotFoundError, SandboxFailedError, SandboxTimeoutError
+from fireagent.exceptions import (
+    FireagentError,
+    NotFoundError,
+    SandboxFailedError,
+    SandboxTimeoutError,
+)
 from fireagent.models import SandboxStatus
-
 
 # ---------------------------------------------------------------------------
 # Config
@@ -187,7 +191,13 @@ class Config:
 # ---------------------------------------------------------------------------
 @click.group(context_settings={"help_option_names": ["-h", "--help"]})
 @click.option("--config", type=click.Path(exists=True), help="Config file path")
-@click.option("--format", "-f", type=click.Choice(["table", "json", "yaml"]), default=None, help="Output format")
+@click.option(
+    "--format",
+    "-f",
+    type=click.Choice(["table", "json", "yaml"]),
+    default=None,
+    help="Output format",
+)
 @click.option("--base-url", envvar="FIREAGENT_BASE_URL", help="API base URL")
 @click.option("--api-key", envvar="FIREAGENT_API_KEY", help="API key")
 @click.option("--debug/--no-debug", default=False, help="Enable debug output")
@@ -204,6 +214,7 @@ def cli(ctx, config, format, base_url, api_key, debug):
     ctx.obj = Config(cfg, fmt)
     if debug:
         import logging
+
         logging.basicConfig(level=logging.DEBUG)
 
 
@@ -280,8 +291,12 @@ def sandboxes():
 @click.option("--ttl", "--ttl-seconds", type=int, default=None, help="TTL in seconds")
 @click.option("--idle-timeout", type=int, default=None, help="Idle timeout in seconds")
 @click.option("--label", "-l", multiple=True, help="Labels (key=value)")
-@click.option("--network-rule", "-n", multiple=True,
-              help="Network rule (action:protocol:dest:port e.g. allow:tcp:github.com:443)")
+@click.option(
+    "--network-rule",
+    "-n",
+    multiple=True,
+    help="Network rule (action:protocol:dest:port e.g. allow:tcp:github.com:443)",
+)
 @click.option("--wait/--no-wait", default=True, help="Wait for ready state")
 @click.option("--timeout", "wait_timeout", type=int, default=120, help="Wait timeout")
 @click.pass_obj
@@ -309,7 +324,14 @@ def sandbox_create(obj: Config, **kw):
         for rule in kw["network_rule"]:
             parts = rule.split(":", 3)
             if len(parts) == 4:
-                rules.append({"action": parts[0], "protocol": parts[1], "destination": parts[2], "port": int(parts[3])})
+                rules.append(
+                    {
+                        "action": parts[0],
+                        "protocol": parts[1],
+                        "destination": parts[2],
+                        "port": int(parts[3]),
+                    }
+                )
         if rules:
             body["network_policy"] = {"rules": rules}
     try:
@@ -380,13 +402,18 @@ def sandbox_exec(obj: Config, sandbox_id, **kw):
                 env_dict[k] = v
     try:
         result = obj.client._exec(
-            sandbox_id=sandbox_id, command=kw["command"],
-            working_dir=kw["workdir"], environment=env_dict,
-            execution_timeout_seconds=kw["exec_timeout"], stdin=kw["stdin"],
+            sandbox_id=sandbox_id,
+            command=kw["command"],
+            working_dir=kw["workdir"],
+            environment=env_dict,
+            execution_timeout_seconds=kw["exec_timeout"],
+            stdin=kw["stdin"],
         )
         data = {
-            "stdout": result.stdout, "stderr": result.stderr,
-            "exit_code": result.exit_code, "timed_out": result.timed_out,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+            "exit_code": result.exit_code,
+            "timed_out": result.timed_out,
             "oom_killed": result.oom_killed,
             "start_time": str(result.start_time) if result.start_time else None,
             "finish_time": str(result.finish_time) if result.finish_time else None,
@@ -501,9 +528,16 @@ def hosts():
 @click.option("--deploy-key/--no-deploy-key", default=False, help="Auto-deploy SSH key")
 @click.option("--tags", multiple=True, help="Tags (key=value)")
 @click.pass_obj
-def host_add(obj: Config, hostname: str, port: int, user: str,
-             key: str | None, label: str | None,
-             deploy_key: bool, tags: tuple[str, ...]):
+def host_add(
+    obj: Config,
+    hostname: str,
+    port: int,
+    user: str,
+    key: str | None,
+    label: str | None,
+    deploy_key: bool,
+    tags: tuple[str, ...],
+):
     """Add a remote worker host to the registry."""
     tag_dict = {}
     for t in tags:
@@ -513,18 +547,25 @@ def host_add(obj: Config, hostname: str, port: int, user: str,
 
     operator = _get_operator(obj)
     host = operator.add_host(
-        hostname=hostname, port=port, user=user,
-        key_path=key, label=label, tags=tag_dict,
+        hostname=hostname,
+        port=port,
+        user=user,
+        key_path=key,
+        label=label,
+        tags=tag_dict,
         deploy_key=deploy_key,
     )
-    format_output({
-        "id": host.id,
-        "hostname": host.hostname,
-        "port": host.port,
-        "user": host.user,
-        "label": host.label,
-        "status": host.status,
-    }, obj.fmt)
+    format_output(
+        {
+            "id": host.id,
+            "hostname": host.hostname,
+            "port": host.port,
+            "user": host.user,
+            "label": host.label,
+            "status": host.status,
+        },
+        obj.fmt,
+    )
 
 
 @hosts.command("remove")
@@ -546,7 +587,9 @@ def host_remove(obj: Config, host_id: str, yes: bool):
 
 @hosts.command("ls")
 @click.option("--status", help="Filter by status (connected, disconnected, etc.)")
-@click.option("--format", "fmt_override", type=click.Choice(["table", "json", "yaml"]), default=None)
+@click.option(
+    "--format", "fmt_override", type=click.Choice(["table", "json", "yaml"]), default=None
+)
 @click.pass_obj
 def host_list(obj: Config, status: str | None, fmt_override: str | None):
     """List registered hosts."""
@@ -560,20 +603,22 @@ def host_list(obj: Config, status: str | None, fmt_override: str | None):
 
     data = []
     for h in hosts_list:
-        data.append({
-            "id": h.id,
-            "hostname": h.hostname,
-            "port": h.port,
-            "user": h.user,
-            "label": h.label or "",
-            "status": h.status,
-            "cpu": h.cpu_cores,
-            "memory_mib": h.total_memory_mib,
-            "disk_gb": h.total_disk_gb,
-            "has_kvm": "✓" if h.has_kvm else "✗",
-            "fc_version": h.firecracker_version or "-",
-            "sandboxes": h.active_sandbox_count,
-        })
+        data.append(
+            {
+                "id": h.id,
+                "hostname": h.hostname,
+                "port": h.port,
+                "user": h.user,
+                "label": h.label or "",
+                "status": h.status,
+                "cpu": h.cpu_cores,
+                "memory_mib": h.total_memory_mib,
+                "disk_gb": h.total_disk_gb,
+                "has_kvm": "✓" if h.has_kvm else "✗",
+                "fc_version": h.firecracker_version or "-",
+                "sandboxes": h.active_sandbox_count,
+            }
+        )
     format_output(data, fmt)
 
 
@@ -616,7 +661,7 @@ def host_push_keys(obj: Config, host_id: str, key_path: str | None, password: st
         click.echo(f"Key deployed to {host_id}")
         click.echo(f"  Key:       {result['key'][:40]}...")
         click.echo(f"  Verified:  {'✓' if result['verified'] else '✗'}")
-        if not result['verified']:
+        if not result["verified"]:
             click.echo("  Warning: key-based auth not verified", err=True)
     except KeyError:
         click.echo(f"Host {host_id} not found", err=True)
@@ -646,15 +691,19 @@ def host_generate_key(obj: Config, key_path: str | None):
 @click.option("--timeout", type=float, default=3.0, help="Scan timeout per host")
 @click.option("--workers", type=int, default=20, help="Max concurrent scans")
 @click.pass_obj
-def host_discover(obj: Config, cidr: str | None, port: int, user: str,
-                  timeout: float, workers: int):
+def host_discover(
+    obj: Config, cidr: str | None, port: int, user: str, timeout: float, workers: int
+):
     """Discover Firecracker hosts on the network."""
     click.echo(f"Scanning network (timeout={timeout}s, workers={workers})...")
     operator = _get_operator(obj)
     try:
         discovered = operator.discover_hosts(
-            cidr=cidr, port=port, user=user,
-            timeout=timeout, max_workers=workers,
+            cidr=cidr,
+            port=port,
+            user=user,
+            timeout=timeout,
+            max_workers=workers,
         )
         click.echo(f"Discovered {len(discovered)} hosts:")
         for h in discovered:
@@ -698,6 +747,7 @@ def host_resource_usage(obj: Config, host_id: str):
 def _get_operator(obj: Config) -> "Operator":
     """Lazy-init and cache an Operator instance."""
     from fireagent_host.operator import Operator
+
     if not hasattr(obj, "_operator"):
         obj._operator = Operator()
     return obj._operator

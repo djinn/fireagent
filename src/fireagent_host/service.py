@@ -31,6 +31,7 @@ def _get_host_agent():
     if _host_agent is None:
         try:
             from fireagent_host.agent import HostAgent
+
             _host_agent = HostAgent()
         except Exception:
             _host_agent = None
@@ -97,7 +98,11 @@ class SandboxService:
             "workspace": workspace.model_dump() if hasattr(workspace, "model_dump") else workspace,
             "ttl_seconds": ttl_seconds,
             "idle_timeout_seconds": idle_timeout_seconds,
-            "network_policy": network_policy.model_dump() if hasattr(network_policy, "model_dump") else network_policy,
+            "network_policy": (
+                network_policy.model_dump()
+                if hasattr(network_policy, "model_dump")
+                else network_policy
+            ),
             "labels": labels or {},
             "created_at": now,
             "started_at": None,
@@ -137,6 +142,7 @@ class SandboxService:
                 else:
                     # If result is a coroutine, we need to await it
                     import asyncio as _a
+
                     try:
                         _a.get_running_loop()
                     except RuntimeError:

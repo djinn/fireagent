@@ -195,9 +195,7 @@ class TestValidation:
 
         # Invalid — missing version
         with pytest.raises(ValueError, match="must be in format"):
-            SandboxCreateRequest(
-                image="ubuntu", vcpus=1, memory_mib=512, disk_mib=1024
-            )
+            SandboxCreateRequest(image="ubuntu", vcpus=1, memory_mib=512, disk_mib=1024)
 
     def test_resource_ranges(self) -> None:
         from fireagent_api.models import SandboxCreateRequest

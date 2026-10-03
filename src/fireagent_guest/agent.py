@@ -101,7 +101,17 @@ def handle_request(request: dict) -> dict:
         }
 
     # Basic sanitization: prevent dangerous commands
-    dangerous = ["sudo", "su", "chroot", "reboot", "shutdown", "halt", "poweroff", "init", "telinit"]
+    dangerous = [
+        "sudo",
+        "su",
+        "chroot",
+        "reboot",
+        "shutdown",
+        "halt",
+        "poweroff",
+        "init",
+        "telinit",
+    ]
     try:
         cmd_parts = shlex.split(command)
     except ValueError:

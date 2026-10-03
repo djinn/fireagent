@@ -27,6 +27,7 @@ logger = logging.getLogger("fireagent.host.microvm")
 # MicroVM instance
 # ---------------------------------------------------------------------------
 
+
 class MicroVMInstance:
     """Represents a running Firecracker microVM instance."""
 
@@ -63,6 +64,7 @@ class MicroVMManager:
 
     def __init__(self, config: dict | None = None) -> None:
         from fireagent_agent.agent import DEFAULT_CONFIG as _DC
+
         self.config = config or _DC.copy()
         self.workspace_dir = Path(self.config["storage"]["workspace_dir"])
         self.image_dir = Path(self.config["storage"]["image_dir"])
@@ -76,7 +78,8 @@ class MicroVMManager:
         try:
             result = subprocess.run(
                 ["which", "firecracker"],
-                capture_output=True, text=True,
+                capture_output=True,
+                text=True,
             )
             return result.returncode == 0 and result.stdout.strip()
         except FileNotFoundError:
@@ -99,7 +102,11 @@ class MicroVMManager:
         """
         logger.info(
             "Creating microVM %s (image=%s, %d vCPU, %d MiB, %d MiB disk)",
-            sandbox_id, image, vcpus, memory_mib, disk_mib,
+            sandbox_id,
+            image,
+            vcpus,
+            memory_mib,
+            disk_mib,
         )
 
         sandbox_dir = self.workspace_dir / sandbox_id
@@ -127,14 +134,18 @@ class MicroVMManager:
             instance = await self._launch_mock(sandbox_id, sandbox_dir)
         else:
             instance = await self._launch_real(
-                sandbox_id, sandbox_dir, api_socket,
-                kernel_path, rootfs_path, workspace_img,
-                vcpus, memory_mib,
+                sandbox_id,
+                sandbox_dir,
+                api_socket,
+                kernel_path,
+                rootfs_path,
+                workspace_img,
+                vcpus,
+                memory_mib,
             )
 
         self._instances[sandbox_id] = instance
-        logger.info("MicroVM %s ready (%s)", sandbox_id,
-                     "mock" if self._use_mock else "real")
+        logger.info("MicroVM %s ready (%s)", sandbox_id, "mock" if self._use_mock else "real")
         return instance
 
     async def _create_workspace(self, path: Path, size_mib: int) -> bool:
@@ -150,9 +161,9 @@ class MicroVMManager:
         if shutil.which("qemu-img"):
             try:
                 result = subprocess.run(
-                    ["qemu-img", "create", "-f", "qcow2", "-o",
-                     f"size={size_mib}MiB", str(path)],
-                    capture_output=True, text=True,
+                    ["qemu-img", "create", "-f", "qcow2", "-o", f"size={size_mib}MiB", str(path)],
+                    capture_output=True,
+                    text=True,
                 )
                 if result.returncode == 0:
                     self._mkfs(path)
@@ -211,7 +222,8 @@ class MicroVMManager:
         # Start Firecracker process (no CLI args for machine config)
         cmd = [
             self.firecracker_bin,
-            "--api-sock", str(api_socket),
+            "--api-sock",
+            str(api_socket),
         ]
 
         proc = subprocess.Popen(
@@ -343,6 +355,7 @@ class MicroVMManager:
         sandbox_dir = self.workspace_dir / sandbox_id
         if sandbox_dir.exists():
             import shutil
+
             shutil.rmtree(sandbox_dir)
             logger.info("Deleted sandbox directory %s", sandbox_dir)
         return True

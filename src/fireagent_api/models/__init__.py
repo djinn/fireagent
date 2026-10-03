@@ -31,7 +31,9 @@ class WorkspaceConfig(BaseModel):
 
 
 class SandboxCreateRequest(BaseModel):
-    image: str = Field(..., min_length=1, description="Guest image name and version (e.g. ubuntu:24.04)")
+    image: str = Field(
+        ..., min_length=1, description="Guest image name and version (e.g. ubuntu:24.04)"
+    )
     workspace: WorkspaceConfig | None = None
     vcpus: int = Field(..., ge=1, le=16)
     memory_mib: int = Field(..., ge=64, le=65536)

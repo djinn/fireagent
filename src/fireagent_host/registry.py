@@ -2,6 +2,7 @@
 
 Storage: JSON file at ~/.fireagent/hosts.json
 """
+
 from __future__ import annotations
 
 import json

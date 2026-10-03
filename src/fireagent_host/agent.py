@@ -35,6 +35,7 @@ class HostAgent:
     def vm_manager(self):
         if self._vm_manager is None:
             from fireagent_host.microvm import MicroVMManager
+
             self._vm_manager = MicroVMManager(self.config)
         return self._vm_manager
 
@@ -42,7 +43,9 @@ class HostAgent:
         """Start the host agent loop."""
         self._running = True
         host_id = self.config.get("agent", {}).get("host_id", "host-01")
-        control_plane = self.config.get("agent", {}).get("control_plane_url", "http://127.0.0.1:8000")
+        control_plane = self.config.get("agent", {}).get(
+            "control_plane_url", "http://127.0.0.1:8000"
+        )
 
         logger.info("Starting host agent %s (control plane: %s)", host_id, control_plane)
 
@@ -126,6 +129,7 @@ class HostAgent:
 # Legacy wrapper (for backward compatibility with old entrypoint)
 # ---------------------------------------------------------------------------
 
+
 # Preserve the old HostAgent interface for backward compat
 class LegacyHostAgent(HostAgent):
     """Backward-compatible wrapper that matches the original API."""
@@ -145,6 +149,7 @@ class LegacyHostAgent(HostAgent):
     def _get_cpu_usage() -> float:
         try:
             import psutil
+
             return psutil.cpu_percent(interval=0.5)
         except ImportError:
             return 0.0
@@ -163,23 +168,32 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="Fireagent Host Agent")
-    parser.add_argument("--config", type=str, default="/etc/fireagent/agent.conf",
-                        help="Path to agent configuration file")
-    parser.add_argument("--mock", action="store_true",
-                        help="Use mock Firecracker (no KVM required)")
+    parser.add_argument(
+        "--config",
+        type=str,
+        default="/etc/fireagent/agent.conf",
+        help="Path to agent configuration file",
+    )
+    parser.add_argument(
+        "--mock", action="store_true", help="Use mock Firecracker (no KVM required)"
+    )
     args = parser.parse_args()
 
     from fireagent_agent.agent import DEFAULT_CONFIG
+
     config = DEFAULT_CONFIG.copy()
     if os.path.exists(args.config):
         import configparser
+
         cfg = configparser.ConfigParser()
         cfg.read(args.config)
         for section in cfg.sections():
             if section in config:
                 config[section].update(dict(cfg.items(section)))
 
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s %(message)s"
+    )
 
     agent = HostAgent(config)
 

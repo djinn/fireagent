@@ -38,8 +38,7 @@ def main() -> None:
 
     # Agent writes a solution
     print("\n2. Agent writes solution...")
-    sb.exec("cat > /workspace/solution.py << 'EOF'",
-            working_dir="/workspace")
+    sb.exec("cat > /workspace/solution.py << 'EOF'", working_dir="/workspace")
     sb.exec("""cat > /workspace/solution.py << 'PYEOF'
 def solve(n: int) -> int:
     \"\"\"Return the nth Fibonacci number.\"\"\"
@@ -86,7 +85,6 @@ PYEOF""")
     print("   Sandbox deleted.")
 
     print("\n=== Agent workflow completed! ===")
-
 
 
 if __name__ == "__main__":

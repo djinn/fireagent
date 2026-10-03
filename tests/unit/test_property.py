@@ -162,7 +162,11 @@ class TestHttpStatusMapping:
         exc_cls = map_http_status(status_code)
         assert issubclass(exc_cls, FireagentError)
 
-    @given(st.integers(min_value=100, max_value=599).filter(lambda x: x not in (400, 401, 403, 404, 409, 429, 500, 503)))
+    @given(
+        st.integers(min_value=100, max_value=599).filter(
+            lambda x: x not in (400, 401, 403, 404, 409, 429, 500, 503)
+        )
+    )
     def test_unknown_status_maps_to_base(self, status_code: int) -> None:
         """Unknown status codes should map to FireagentError."""
         exc_cls = map_http_status(status_code)

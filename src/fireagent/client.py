@@ -197,9 +197,7 @@ class FireagentClient:
                     # Non-retryable: success or client error
                     pass
                 else:
-                    last_exc = FireagentError(
-                        f"HTTP {resp.status_code} on {method} {path}"
-                    )
+                    last_exc = FireagentError(f"HTTP {resp.status_code} on {method} {path}")
                     if attempt < self._retries:
                         time.sleep(self._retry_delay * (2**attempt))
                         continue
@@ -347,9 +345,7 @@ class FireagentClient:
                 f"Command {command!r} timed out after {execution_timeout_seconds or 'default'}s"
             )
         if result.oom_killed:
-            raise CommandOomKilledError(
-                f"Command {command!r} was killed by OOM"
-            )
+            raise CommandOomKilledError(f"Command {command!r} was killed by OOM")
         if "network_denial" in data:
             raise NetworkDenialError(data.get("network_denial", "Network policy violated"))
 
@@ -363,7 +359,9 @@ class FireagentClient:
 
     # ---- async operations -------------------------------------------------
 
-    async def acreate(self, image: str, vcpus: int, memory_mib: int, disk_mib: int, **kwargs) -> Sandbox:
+    async def acreate(
+        self, image: str, vcpus: int, memory_mib: int, disk_mib: int, **kwargs
+    ) -> Sandbox:
         body: dict[str, Any] = {
             "image": image,
             "vcpus": vcpus,

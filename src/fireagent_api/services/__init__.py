@@ -51,7 +51,11 @@ class SandboxService:
             "workspace": workspace.model_dump() if hasattr(workspace, "model_dump") else workspace,
             "ttl_seconds": ttl_seconds,
             "idle_timeout_seconds": idle_timeout_seconds,
-            "network_policy": network_policy.model_dump() if hasattr(network_policy, "model_dump") else network_policy,
+            "network_policy": (
+                network_policy.model_dump()
+                if hasattr(network_policy, "model_dump")
+                else network_policy
+            ),
             "labels": labels or {},
             "created_at": now,
             "started_at": None,
