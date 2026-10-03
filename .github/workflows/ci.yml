@@ -166,78 +166,43 @@ jobs:
           path: dist/*.tar.gz
 
   # ------------------------------------------------------------------
-  # Build platform wheels (on tag release or manual dispatch)
+  # Build wheel (on tag release or manual dispatch)
   #
-  # Produces native wheels for:
-  #   Linux:   x86_64 (Intel)  + aarch64 (ARM64)  via QEMU
-  #   macOS:   x86_64 (Intel)  + arm64 (Apple Sil.) via multi-arch
-  #
-  # Windows is intentionally omitted — it's out of scope for the
-  # Firecracker-based target (no KVM on Windows). Users on Windows
-  # should use WSL2 or the source distribution.
+  # Fireagent is pure Python (no compiled extensions). A single
+  # `python -m build --wheel` produces a universal wheel that works
+  # on Linux, macOS, and Windows. No cibuildwheel or manylinux needed.
   # ------------------------------------------------------------------
-  wheels:
-    name: "Wheel — ${{ matrix.target }}"
+  wheel:
+    name: Build wheel
     needs: [lint]
     if: >
       (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) ||
       (github.event_name == 'workflow_dispatch' && inputs.build_wheels)
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          # ─ Linux x86_64 + aarch64 (cross-compiled via QEMU) ─
-          - target: linux-x86_64-aarch64
-            os: ubuntu-latest
-            cibw_archs: "auto"
-
-          # ─ macOS both arches (macos-latest is ARM; provides x86_64 via Rosetta 2) ─
-          - target: macos-x86_64-arm64
-            os: macos-latest
-            cibw_archs: "auto"
-
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.10"
 
-      - name: Install cibuildwheel
-        run: pip install "cibuildwheel>=2.20,<3.0" build
-
-      - name: Set up QEMU for aarch64
-        if: matrix.os == 'ubuntu-latest'
+      - name: Build wheel
         run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
-          echo "QEMU set up for aarch64 cross-build"
+          pip install build
+          python -m build --wheel
 
-      - name: Build wheels
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-*"
-          CIBW_ARCHS: ${{ matrix.cibw_archs }}
-          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux2014"
-          CIBW_REPAIR_WHEEL_COMMAND_MACOS: "delocate-wheel -w {dest_dir} -v {wheel}"
-          CIBW_TEST_SKIP: "*-macosx_arm64 *-manylinux_aarch64"
-        run: |
-          mkdir -p wheelhouse
-          cibuildwheel --output-dir wheelhouse 2>&1
-
-      - name: List built wheels
-        run: ls -lh wheelhouse/
-
-      - name: Upload wheels
+      - name: Upload wheel
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.target }}
-          path: wheelhouse/*.whl
+          name: wheel
+          path: dist/*.whl
+
 
   # ------------------------------------------------------------------
   # Publish to PyPI (on tag)
   # ------------------------------------------------------------------
   publish:
     name: Publish to PyPI
-    needs: [sdist, wheels]
+    needs: [sdist, wheel]
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     permissions:
@@ -245,8 +210,7 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          pattern: "wheels-*"
-          merge-multiple: true
+          name: wheel
       - uses: actions/download-artifact@v4
         with:
           name: sdist
@@ -262,7 +226,7 @@ jobs:
   # ------------------------------------------------------------------
   summary:
     name: "Summary"
-    needs: [lint, test, security, docs, sdist]
+    needs: [lint, test, security, docs, sdist, wheel]
     if: always()
     runs-on: ubuntu-latest
     steps:
