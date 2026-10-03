@@ -1,0 +1,43 @@
+# Fireagent CI/CD configuration reference
+# ===========================================================================
+
+# Python versions to test
+python_versions:
+  - "3.10"
+  - "3.11"
+  - "3.12"
+
+# OS platforms to build wheels for
+platforms:
+  linux:
+    - manylinux2014-x86_64
+    - manylinux2014-aarch64
+  macos:
+    - macosx-x86_64
+    - macosx-arm64
+  windows:
+    - win-amd64
+
+# Test configuration
+test:
+  unit_pattern: "tests/unit/"
+  integration_pattern: "tests/integration/"
+  e2e_pattern: "tests/e2e/"
+  property_pattern: "tests/unit/test_property.py"
+  timeout: 120
+  retries: 2
+
+# Build configuration
+build:
+  sdist: true
+  wheels: true
+  wheel_arch:
+    linux: [x86_64, aarch64]
+    macos: [x86_64, arm64]
+    windows: [AMD64]
+
+# Release configuration
+release:
+  pypi: true
+  github_release: true
+  sign: true

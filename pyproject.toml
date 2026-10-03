@@ -1,6 +1,6 @@
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "fireagent"
@@ -18,6 +18,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Topic :: System :: Emulation",
 ]
@@ -25,19 +26,27 @@ requires-python = ">=3.10"
 dependencies = [
     "httpx>=0.27.0",
     "fastapi>=0.110.0",
-    "uvicorn[standalone]>=0.27.0",
+    "uvicorn>=0.27.0",
     "pydantic>=2.5.0",
+    "click>=8.1.0",
+    "pyyaml>=6.0",
+    "rich>=13.0.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0",
     "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=3.0",
+    "hypothesis>=6.0",
     "black>=24.0",
     "isort>=5.13",
     "ruff>=0.2.0",
     "mypy>=1.8.0",
     "pre-commit>=3.5.0",
+    "bandit>=1.7.0",
+    "tomli>=2.0",
 ]
 agent = [
     "psutil>=5.9.0",
@@ -51,8 +60,18 @@ docs = [
     "mkdocs-git-revision-date-localized-plugin>=1.2.0",
     "pymdown-extensions>=10.0",
 ]
+test = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+    "pytest-cov>=4.0",
+    "pytest-xdist>=3.0",
+    "hypothesis>=6.0",
+    "responses>=0.25.0",
+    "trustme>=1.0",
+]
 
 [project.scripts]
+fireagent = "fireagent.cli:main"
 fireagent-api = "fireagent_api.app:main"
 fireagent-agent = "fireagent_agent.agent:main"
 
@@ -61,7 +80,7 @@ where = ["src"]
 
 [tool.black]
 line-length = 100
-target-version = ["py310", "py311", "py312"]
+target-version = ["py310", "py311", "py312", "py313"]
 
 [tool.isort]
 profile = "black"
@@ -70,13 +89,48 @@ line_length = 100
 [tool.ruff]
 target-version = "py310"
 line-length = 100
-select = ["E", "F", "I", "N", "W", "UP"]
+select = ["E", "F", "I", "N", "W", "UP", "B", "SIM"]
+ignore = ["B905"]
+fix = true
 
 [tool.mypy]
 python_version = "3.10"
 strict = true
 ignore_missing_imports = true
+warn_unused_ignores = true
+no_implicit_optional = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+addopts = "-v --tb=short --cov=fireagent --cov=fireagent_api --cov=fireagent_agent --cov-report=term-missing --cov-report=xml:coverage.xml"
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["*/tests/*", "*/__main__*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "raise NotImplementedError",
+    "@abc.abstractmethod",
+]
+
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-*"
+skip = ""
+manylinux-x86_64-image = "manylinux2014"
+manylinux-aarch64-image = "manylinux2014"
+test-command = "python -c \"import fireagent; print(fireagent.__version__)\""
+test-skip = "cp313-*"
+build-frontend = "build"
+
+[tool.cibuildwheel.linux]
+repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.macos]
+repair-wheel-command = "delocate-wheel -w {dest_dir} -v {wheel}"
+
+[tool.cibuildwheel.windows]
+repair-wheel-command = ""

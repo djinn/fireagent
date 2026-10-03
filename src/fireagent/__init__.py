@@ -140,6 +140,8 @@ async def acreate(
     )
 
 
+from .cli import cli as main  # CLI entry point
+
 __all__ = [
     "__version__",
     "__author__",

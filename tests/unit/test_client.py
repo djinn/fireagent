@@ -19,9 +19,14 @@ from fireagent import (
     set_timeout,
 )
 from fireagent.exceptions import (
+    ConflictError,
+    FireagentError,
+    ForbiddenError,
+    InternalServerError,
     InvalidRequestError,
     NotFoundError,
     RateLimitError,
+    ServiceUnavailableError,
     UnauthorizedError,
 )
 from fireagent.models import CommandResult, SandboxStatus
@@ -150,18 +155,6 @@ class TestSandboxStatus:
 # ---------------------------------------------------------------------------
 class TestExceptions:
     def test_inheritance(self) -> None:
-        from fireagent.exceptions import (
-            ConflictError,
-            FireagentError,
-            ForbiddenError,
-            InternalServerError,
-            InvalidRequestError,
-            NotFoundError,
-            RateLimitError,
-            ServiceUnavailableError,
-            UnauthorizedError,
-        )
-
         assert issubclass(InvalidRequestError, FireagentError)
         assert issubclass(UnauthorizedError, FireagentError)
         assert issubclass(ForbiddenError, FireagentError)

@@ -1,0 +1,23 @@
+# Fireagent CLI Configuration
+
+# Default config file location: ~/.fireagent/config.yaml
+# Override with: FIREAGENT_CONFIG or --config
+
+api:
+  base_url: "http://127.0.0.1:8000"
+  api_key: "${FIREAGENT_API_KEY:-}"
+  timeout: 30
+  retries: 3
+  retry_delay: 0.5
+
+cli:
+  default_format: "table"  # table | json | yaml
+  color: true
+  paginate: false
+
+sandbox:
+  default_image: "ubuntu:24.04"
+  default_vcpus: 1
+  default_memory_mib: 512
+  default_disk_mib: 1024
+  default_ttl_seconds: 3600

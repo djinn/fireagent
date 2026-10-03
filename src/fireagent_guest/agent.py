@@ -14,7 +14,10 @@ import sys
 import time
 from pathlib import Path
 
-import serial  # pyserial
+try:
+    import serial  # pyserial  # noqa: F401
+except ImportError:
+    serial = None  # type: ignore[assignment]
 
 
 # ---------------------------------------------------------------------------
@@ -35,7 +38,8 @@ def setup_workspace() -> None:
             ["mount", "-o", "rw,noexec,nosuid", workspace_device, WORKSPACE_MOUNT],
             capture_output=True,
         )
-        os.chdir(WORKSPACE_MOUNT)
+        if os.path.exists(WORKSPACE_MOUNT):
+            os.chdir(WORKSPACE_MOUNT)
 
 
 def setup_environment() -> None:
@@ -86,10 +90,29 @@ def handle_request(request: dict) -> dict:
     command = request.get("command", "")
     timeout = request.get("execution_timeout_seconds", 300)
 
+    # Validate
+    if command is None:
+        return {
+            "stdout": "",
+            "stderr": "No command provided",
+            "exit_code": -1,
+            "timed_out": False,
+            "oom_killed": False,
+        }
+
     # Basic sanitization: prevent dangerous commands
-    dangerous = ["sudo", "su", "chroot", "reboot", "shutdown", "halt", "poweroff"]
-    cmd_parts = shlex.split(command)
-    if any(d in cmd_parts[0] if cmd_parts else "" for d in dangerous):
+    dangerous = ["sudo", "su", "chroot", "reboot", "shutdown", "halt", "poweroff", "init", "telinit"]
+    try:
+        cmd_parts = shlex.split(command)
+    except ValueError:
+        return {
+            "stdout": "",
+            "stderr": "Invalid command",
+            "exit_code": -1,
+            "timed_out": False,
+            "oom_killed": False,
+        }
+    if cmd_parts and cmd_parts[0] in dangerous:
         return {
             "stdout": "",
             "stderr": "Command not allowed: privileged operations are disabled",
