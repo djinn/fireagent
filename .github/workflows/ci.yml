@@ -223,7 +223,7 @@ jobs:
         run: |
           ls -lh dist/
           TAG="${GITHUB_REF#refs/tags/}"
-          gh release upload "$TAG" dist/*.whl dist/*.tar.gz --clobber --create
+          gh release create "$TAG" dist/*.whl dist/*.tar.gz --generate-notes --title "$TAG"
 
   # ------------------------------------------------------------------
   # Summary
