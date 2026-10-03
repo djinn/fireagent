@@ -489,14 +489,218 @@ def image_list(obj: Config):
 # ---------------------------------------------------------------------------
 @cli.group()
 def hosts():
-    """Manage worker hosts."""
+    """Manage remote worker hosts (SSH)."""
+
+
+@hosts.command("add")
+@click.argument("hostname")
+@click.option("--port", type=int, default=22, help="SSH port")
+@click.option("--user", default="fireagent", help="SSH username")
+@click.option("--key", "--key-path", help="Path to SSH private key")
+@click.option("--label", help="Human-readable label")
+@click.option("--deploy-key/--no-deploy-key", default=False, help="Auto-deploy SSH key")
+@click.option("--tags", multiple=True, help="Tags (key=value)")
+@click.pass_obj
+def host_add(obj: Config, hostname: str, port: int, user: str,
+             key: str | None, label: str | None,
+             deploy_key: bool, tags: tuple[str, ...]):
+    """Add a remote worker host to the registry."""
+    tag_dict = {}
+    for t in tags:
+        if "=" in t:
+            k, v = t.split("=", 1)
+            tag_dict[k] = v
+
+    operator = _get_operator(obj)
+    host = operator.add_host(
+        hostname=hostname, port=port, user=user,
+        key_path=key, label=label, tags=tag_dict,
+        deploy_key=deploy_key,
+    )
+    format_output({
+        "id": host.id,
+        "hostname": host.hostname,
+        "port": host.port,
+        "user": host.user,
+        "label": host.label,
+        "status": host.status,
+    }, obj.fmt)
+
+
+@hosts.command("remove")
+@click.argument("host_id")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation")
+@click.pass_obj
+def host_remove(obj: Config, host_id: str, yes: bool):
+    """Remove a host from the registry."""
+    if not yes:
+        click.confirm(f"Remove host {host_id}?", abort=True)
+    operator = _get_operator(obj)
+    ok = operator.remove_host(host_id)
+    if ok:
+        click.echo(f"Host {host_id} removed")
+    else:
+        click.echo(f"Host {host_id} not found", err=True)
+        sys.exit(1)
 
 
 @hosts.command("ls")
+@click.option("--status", help="Filter by status (connected, disconnected, etc.)")
+@click.option("--format", "fmt_override", type=click.Choice(["table", "json", "yaml"]), default=None)
 @click.pass_obj
-def host_list(obj: Config):
+def host_list(obj: Config, status: str | None, fmt_override: str | None):
     """List registered hosts."""
-    click.echo("Host management: see 'fireagent hosts register' (coming soon).")
+    operator = _get_operator(obj)
+    hosts_list = operator.list_hosts(status=status)
+    fmt = fmt_override or obj.fmt
+
+    if not hosts_list:
+        click.echo("No hosts registered. Use 'fireagent hosts add' to add one.")
+        return
+
+    data = []
+    for h in hosts_list:
+        data.append({
+            "id": h.id,
+            "hostname": h.hostname,
+            "port": h.port,
+            "user": h.user,
+            "label": h.label or "",
+            "status": h.status,
+            "cpu": h.cpu_cores,
+            "memory_mib": h.total_memory_mib,
+            "disk_gb": h.total_disk_gb,
+            "has_kvm": "✓" if h.has_kvm else "✗",
+            "fc_version": h.firecracker_version or "-",
+            "sandboxes": h.active_sandbox_count,
+        })
+    format_output(data, fmt)
+
+
+@hosts.command("status")
+@click.argument("host_id")
+@click.pass_obj
+def host_status(obj: Config, host_id: str):
+    """Check health and capacity of a remote host."""
+    operator = _get_operator(obj)
+    try:
+        health = operator.host_health(host_id)
+        format_output(health, obj.fmt)
+    except KeyError:
+        click.echo(f"Host {host_id} not found in registry", err=True)
+        sys.exit(1)
+    except Exception as exc:
+        click.echo(f"Health check failed: {exc}", err=True)
+        sys.exit(1)
+
+
+@hosts.command("health-all")
+@click.pass_obj
+def host_health_all(obj: Config):
+    """Check health of all registered hosts."""
+    operator = _get_operator(obj)
+    results = operator.health_all()
+    format_output(results, obj.fmt)
+
+
+@hosts.command("push-keys")
+@click.argument("host_id")
+@click.option("--key-path", help="Path to SSH public key")
+@click.option("--password", help="SSH password for initial auth")
+@click.pass_obj
+def host_push_keys(obj: Config, host_id: str, key_path: str | None, password: str | None):
+    """Deploy SSH public key to a remote host."""
+    operator = _get_operator(obj)
+    try:
+        result = operator.deploy_keys(host_id, key_path=key_path, password=password)
+        click.echo(f"Key deployed to {host_id}")
+        click.echo(f"  Key:       {result['key'][:40]}...")
+        click.echo(f"  Verified:  {'✓' if result['verified'] else '✗'}")
+        if not result['verified']:
+            click.echo("  Warning: key-based auth not verified", err=True)
+    except KeyError:
+        click.echo(f"Host {host_id} not found", err=True)
+        sys.exit(1)
+
+
+@hosts.command("generate-key")
+@click.option("--key-path", default=None, help="Output path for new key")
+@click.pass_obj
+def host_generate_key(obj: Config, key_path: str | None):
+    """Generate a new SSH key pair (ed25519)."""
+    operator = _get_operator(obj)
+    try:
+        path = operator.generate_key(key_path)
+        click.echo(f"Generated SSH key pair:")
+        click.echo(f"  Private: {path}")
+        click.echo(f"  Public:  {path}.pub")
+    except FileExistsError as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+
+@hosts.command("discover")
+@click.option("--cidr", help="CIDR range to scan (e.g. 192.168.1.0/24)")
+@click.option("--port", type=int, default=22, help="SSH port")
+@click.option("--user", default="fireagent", help="SSH username")
+@click.option("--timeout", type=float, default=3.0, help="Scan timeout per host")
+@click.option("--workers", type=int, default=20, help="Max concurrent scans")
+@click.pass_obj
+def host_discover(obj: Config, cidr: str | None, port: int, user: str,
+                  timeout: float, workers: int):
+    """Discover Firecracker hosts on the network."""
+    click.echo(f"Scanning network (timeout={timeout}s, workers={workers})...")
+    operator = _get_operator(obj)
+    try:
+        discovered = operator.discover_hosts(
+            cidr=cidr, port=port, user=user,
+            timeout=timeout, max_workers=workers,
+        )
+        click.echo(f"Discovered {len(discovered)} hosts:")
+        for h in discovered:
+            click.echo(f"  {h.id}  {h.label or ''}")
+    except Exception as exc:
+        click.echo(f"Discovery failed: {exc}", err=True)
+        sys.exit(1)
+
+
+@hosts.command("sandboxes")
+@click.argument("host_id")
+@click.pass_obj
+def host_sandboxes(obj: Config, host_id: str):
+    """List sandboxes on a specific remote host."""
+    operator = _get_operator(obj)
+    try:
+        sandboxes = operator.list_sandboxes(host_id)
+        format_output(sandboxes, obj.fmt)
+    except KeyError:
+        click.echo(f"Host {host_id} not found", err=True)
+        sys.exit(1)
+    except Exception as exc:
+        click.echo(f"Error: {exc}", err=True)
+        sys.exit(1)
+
+
+@hosts.command("resource-usage")
+@click.argument("host_id")
+@click.pass_obj
+def host_resource_usage(obj: Config, host_id: str):
+    """Get resource usage for a remote host."""
+    operator = _get_operator(obj)
+    try:
+        usage = operator.get_resource_usage(host_id)
+        format_output(usage, obj.fmt)
+    except KeyError:
+        click.echo(f"Host {host_id} not found", err=True)
+        sys.exit(1)
+
+
+def _get_operator(obj: Config) -> "Operator":
+    """Lazy-init and cache an Operator instance."""
+    from fireagent_host.operator import Operator
+    if not hasattr(obj, "_operator"):
+        obj._operator = Operator()
+    return obj._operator
 
 
 # ---------------------------------------------------------------------------
