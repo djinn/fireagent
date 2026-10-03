@@ -1,0 +1,170 @@
+# Fireagent Documentation
+# License: MIT | Author: Supreet Sethi | (c) 2026
+# https://spaceswordai.github.io/fireagent
+
+site_name: Fireagent
+site_description: Elastic agent sandbox platform powered by Firecracker microVMs — create, command, and destroy isolated Linux sandboxes through a clean API.
+site_author: Supreet Sethi
+site_url: https://spaceswordai.github.io/fireagent
+repo_name: spaceswordai/fireagent
+repo_url: https://github.com/spaceswordai/fireagent
+edit_uri: edit/main/docs/
+copyright: Copyright &copy; 2026 Supreet Sethi &mdash; Spacesword AI
+
+theme:
+  name: material
+  custom_dir: overrides
+  font:
+    text: Inter
+    code: JetBrains Mono
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.tracking
+    - navigation.indexes
+    - navigation.path
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.tabs.link
+    - content.code.copy
+    - content.code.select
+    - content.code.annotate
+    - header.autohide
+    - announce
+  palette:
+    - scheme: slate
+      primary: '#0f172a'
+      accent: '#06b6d4'
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: dark
+      primary: '#0f172a'
+      accent: '#22d3ee'
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  logo: images/fireagent-icon.svg
+  favicon: images/fireagent-icon.svg
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/spaceswordai/fireagent
+    - icon: fontawesome/solid/globe
+      link: https://spaceswordai.com
+  generator: false
+  consent:
+    title: Cookie consent
+    description: This site uses no tracking cookies. Only functional cookies for the search are stored.
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+  - glightbox
+  - mermaid2:
+      arguments:
+        theme: base
+        themeVariables:
+          primaryColor: "#06b6d4"
+          primaryTextColor: "#fff"
+          primaryBorderColor: "#0f172a"
+          lineColor: "#94a3b8"
+          secondaryColor: "#f97316"
+          tertiaryColor: "#22d3ee"
+  
+
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - footnotes
+  - md_in_html
+  - toc:
+      permalink: true
+      toc_depth: 3
+  - pymdownx.arithmatex:
+      generic: true
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.magiclink:
+      repo_url_shorthand: true
+      user: spaceswordai
+      repo: fireagent
+  - pymdownx.mark
+  - pymdownx.pathconverter
+  - pymdownx.progressbar
+  - pymdownx.saneheaders
+  - pymdownx.smartsymbols
+  - pymdownx.snippets:
+      check_paths: true
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.tasklist:
+      custom_checkbox: true
+      clickable_checkbox: true
+  - pymdownx.tilde
+  - tables
+
+nav:
+  - Overview: index.md
+  - Architecture:
+    - architecture/index.md
+    - System Design: architecture/overview.md
+    - Sandbox Lifecycle: architecture/lifecycle.md
+    - Guest Image Construction: architecture/guest-image.md
+    - Host Agent: architecture/host-agent.md
+    - Networking Model: architecture/networking.md
+    - Resource Controls: architecture/resource-controls.md
+    - State Store: architecture/state-store.md
+  - API Reference:
+    - api/index.md
+    - Sandbox Operations: api/sandboxes.md
+    - Command Execution: api/exec.md
+    - Lifecycle Management: api/lifecycle.md
+    - Errors & Status Codes: api/errors.md
+  - Python SDK:
+    - sdk/index.md
+    - Quickstart: sdk/quickstart.md
+    - Reference: sdk/reference.md
+  - Deployment:
+    - deployment/index.md
+    - Single-Host Prototype: deployment/prototype.md
+    - Multi-Host Production: deployment/production.md
+    - Monitoring & Observability: deployment/observability.md
+  - Security:
+    - security/index.md
+    - Threat Model: security/threat-model.md
+    - Isolation Guarantees: security/isolation.md
+    - Network Security: security/network.md
+  - Development:
+    - development/index.md
+    - Contributing: development/contributing.md
+    - Reproducible Builds: development/reproducible-builds.md
+    - Testing Strategy: development/testing.md
+  - Reference:
+    - Glossary: reference/glossary.md
+    - Resources: reference/resources.md

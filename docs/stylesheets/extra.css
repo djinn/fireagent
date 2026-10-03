@@ -1,0 +1,135 @@
+/* Fireagent Documentation – Extra Styles */
+
+:root {
+  --md-primary-fg-color: #0f172a;
+  --md-primary-bg-color: #f8fafc;
+  --md-accent-fg-color: #06b6d4;
+  --md-accent-fg-color--light: #22d3ee;
+  --md-typeset-a-color: #06b6d4;
+  --md-code-bg-color: #1e293b;
+  --md-code-fg-color: #e2e8f0;
+}
+
+/* Hero section on landing page */
+.md-typeset .hero {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+  color: #f8fafc;
+  padding: 4rem 2rem;
+  border-radius: 1.5rem;
+  margin: 1.5rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.md-typeset .hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle at 30% 50%, rgba(6, 182, 212, 0.08) 0%, transparent 60%),
+              radial-gradient(circle at 70% 30%, rgba(249, 115, 22, 0.04) 0%, transparent 50%);
+  animation: drift 20s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(5%, -3%); }
+  50% { transform: translate(-2%, 4%); }
+  75% { transform: translate(3%, -1%); }
+}
+
+.md-typeset .hero h1 {
+  color: #f8fafc;
+  font-weight: 800;
+  margin-bottom: 0.25rem;
+}
+
+.md-typeset .hero .subtitle {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-bottom: 1.5rem;
+}
+
+.md-typeset .hero .badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.md-typeset .hero .badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  background: rgba(6, 182, 212, 0.15);
+  color: #22d3ee;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid rgba(6, 182, 212, 0.3);
+}
+
+/* Live code annotation markers */
+.md-typeset .highlight .md-annotation {
+  color: #f97316;
+}
+
+/* Tab styling */
+.md-typeset .tabbed-set {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+/* Grid cards on index */
+.md-typeset .grid.cards {
+  margin: 1.5rem 0;
+}
+
+.md-typeset .grid.cards > li {
+  border-radius: 0.75rem;
+  border: 1px solid #334155;
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.md-typeset .grid.cards > li:hover {
+  border-color: #06b6d4;
+  transform: translateY(-2px);
+}
+
+/* Glossary terms */
+.md-typeset .glossary-term {
+  color: #f97316;
+  font-weight: 600;
+}
+
+/* Image lightbox refinement */
+.glightbox-caption {
+  font-size: 0.85rem;
+  color: #94a3b8;
+}
+
+/* Status callouts */
+.md-typeset .note {
+  border-left-color: #06b6d4;
+}
+.md-typeset .warning {
+  border-left-color: #f97316;
+}
+.md-typeset .danger {
+  border-left-color: #ef4444;
+}
+
+/* Code block refinements */
+.md-typeset pre > code {
+  font-size: 0.8rem;
+}
+
+/* Mobile refinements */
+@media screen and (max-width: 76.25rem) {
+  .md-nav--primary .md-nav__title {
+    background: #0f172a;
+    color: #f8fafc;
+  }
+}
