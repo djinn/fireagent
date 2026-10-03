@@ -196,7 +196,6 @@ jobs:
           name: wheel
           path: dist/*.whl
 
-
   # ------------------------------------------------------------------
   # Attach wheel + sdist to GitHub Release (on tag)
   # ------------------------------------------------------------------
@@ -208,6 +207,7 @@ jobs:
     permissions:
       contents: write
     steps:
+      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: wheel
