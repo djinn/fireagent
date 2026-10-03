@@ -170,12 +170,16 @@ class MicroVMManager:
         socket_file = sandbox_dir / "firecracker.sock"
         if socket_file.exists():
             socket_file.unlink()
-        # Remove TAP interface
+        # Remove TAP interface (best-effort; may not have permissions or `ip` binary)
         tap_name = f"tap-{sandbox_id[:12]}"
-        subprocess.run(
-            ["ip", "link", "delete", tap_name],
-            capture_output=True,
-        )
+        try:
+            subprocess.run(
+                ["ip", "link", "delete", tap_name],
+                capture_output=True,
+                timeout=5,
+            )
+        except (FileNotFoundError, PermissionError, subprocess.TimeoutExpired):
+            pass
 
     def get_process(self, sandbox_id: str) -> subprocess.Popen | None:
         return self._processes.get(sandbox_id)

@@ -356,9 +356,16 @@ class MicroVMManager:
                 socket_file.unlink()
             except Exception:
                 pass
-        # Remove TAP interface
+        # Remove TAP interface (best-effort; may not have permissions or `ip` binary)
         tap_name = f"tap-{sandbox_id[:12]}"
-        subprocess.run(["ip", "link", "delete", tap_name], capture_output=True)
+        try:
+            subprocess.run(
+                ["ip", "link", "delete", tap_name],
+                capture_output=True,
+                timeout=5,
+            )
+        except (FileNotFoundError, PermissionError, subprocess.TimeoutExpired):
+            pass
 
     # ------------------------------------------------------------------
     # Info
