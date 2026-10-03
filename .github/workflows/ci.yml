@@ -166,10 +166,10 @@ jobs:
           path: dist/*.tar.gz
 
   # ------------------------------------------------------------------
-  # Build platform wheels (CI-only or on workflow_dispatch/tag)
+  # Build platform wheels (on tag release or manual dispatch)
   # ------------------------------------------------------------------
   wheels:
-    name: "Wheel — ${{ matrix.os }}"
+    name: "Wheel — ${{ matrix.target }}"
     needs: [lint, test]
     if: >
       github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') ||
@@ -177,10 +177,31 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-          - ubuntu-latest   # manylinux x86_64 + aarch64 (via QEMU)
-          - macos-latest    # macOS x86_64 + arm64 (native)
-          - windows-latest  # Windows x86_64
+        include:
+          # ─ Linux x86_64 (Intel) ─ native runner ─
+          - target: linux-x86_64
+            os: ubuntu-latest
+            cibw_archs: "x86_64"
+
+          # ─ Linux aarch64 (ARM64) ─ native ARM runner ─
+          - target: linux-arm64
+            os: ubuntu-24.04-arm
+            cibw_archs: "aarch64"
+
+          # ─ macOS x86_64 (Intel) ─ native Intel runner ─
+          - target: macos-x86_64
+            os: macos-13
+            cibw_archs: "x86_64"
+
+          # ─ macOS arm64 (Apple Silicon) ─ native ARM runner ─
+          - target: macos-arm64
+            os: macos-14
+            cibw_archs: "arm64"
+
+          # ─ Windows x86_64 ─
+          - target: windows-x86_64
+            os: windows-latest
+            cibw_archs: "AMD64"
 
     runs-on: ${{ matrix.os }}
     steps:
@@ -190,30 +211,33 @@ jobs:
           python-version: "3.10"
 
       - name: Install cibuildwheel
-        run: pip install cibuildwheel==2.20 build
+        run: pip install cibuildwheel~=2.20 build
 
-      - name: Build wheels (x86_64)
-        if: matrix.os != 'ubuntu-latest'
+      - name: Build wheels
         env:
           CIBW_BUILD: "cp310-* cp311-* cp312-*"
-          CIBW_ARCHS: "auto"
-        run: cibuildwheel --output-dir wheelhouse
-
-      - name: Build wheels (x86_64 + aarch64 with QEMU)
-        if: matrix.os == 'ubuntu-latest'
-        env:
-          CIBW_BUILD: "cp310-* cp311-* cp312-*"
-          CIBW_ARCHS: "native"
-          CIBW_ARCHS_LINUX: "x86_64 aarch64"
+          CIBW_ARCHS: ${{ matrix.cibw_archs }}
+          # Linux ARM64: use manylinux2014 image
+          CIBW_MANYLINUX_AARCH64_IMAGE: "manylinux2014"
+          # macOS: delocate for library bundling
+          CIBW_REPAIR_WHEEL_COMMAND_MACOS: "delocate-wheel -w {dest_dir} -v {wheel}"
+          # Windows (no repair needed)
+          CIBW_REPAIR_WHEEL_COMMAND_WINDOWS: ""
         run: |
-          # Set up QEMU for aarch64 emulation
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
+          # Set up QEMU for Linux ARM64 if running on x86_64 host
+          if [[ "${{ matrix.target }}" == "linux-arm64" && "$(uname -m)" != "aarch64" ]]; then
+            docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 2>/dev/null || true
+          fi
+          mkdir -p wheelhouse
           cibuildwheel --output-dir wheelhouse
+
+      - name: List built wheels
+        run: ls -lh wheelhouse/
 
       - name: Upload wheels
         uses: actions/upload-artifact@v4
         with:
-          name: wheels-${{ matrix.os }}
+          name: wheels-${{ matrix.target }}
           path: wheelhouse/*.whl
 
   # ------------------------------------------------------------------
