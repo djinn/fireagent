@@ -480,6 +480,69 @@ failed    failed    expired    expired    failed    deleted
 
 ---
 
+## AI Coding Agent Integrations
+
+Fireagent provides **isolated, disposable microVM sandboxes** for AI coding agents. Every agent command — shell, file I/O, test runs — executes inside a Firecracker microVM, protecting your host from LLM-generated code while giving the agent a full, stateful Linux environment.
+
+### Claude Code
+
+Run [Claude Code](https://claude.ai/code) coding sessions inside isolated microVMs:
+
+```python
+import fireagent as fa
+
+sb = fa.create(image="ubuntu:24.04", vcpus=2, memory_mib=1024, disk_mib=2048)
+sb.wait_for("ready")
+
+# Claude Code runs commands inside the sandbox
+result = sb.exec("git clone https://github.com/example/repo.git /workspace/repo")
+result = sb.exec("cd /workspace/repo && python3 -m pytest tests/")
+
+sb.stop()
+sb.delete()
+```
+
+**Full guide:** [docs/integrations/claude-code.md](docs/integrations/claude-code.md) — covers the Fireagent extension pattern, CLI wrapper, direct SDK tool provider, and automated PR review workflows.
+
+### OpenAI Codex
+
+Deploy [OpenAI Codex](https://openai.com/codex) agent loops with Fireagent-backed execution:
+
+```python
+import fireagent as fa
+from openai import OpenAI
+
+sb = fa.create(image="ubuntu:24.04", vcpus=2, memory_mib=1024, disk_mib=2048)
+sb.wait_for("ready")
+
+# Codex generates code -> sandbox executes -> results feed back to Codex
+result = sb.exec("python3 -c 'import sys; exec(sys.stdin.read())'",
+                 stdin=codex_generated_code)
+
+sb.stop()
+sb.delete()
+```
+
+**Full guide:** [docs/integrations/openai-codex.md](docs/integrations/openai-codex.md) — covers custom Code Interpreter replacement, function calling tools, RL rollout pattern, and safe code evaluation.
+
+### Any Coding Agent
+
+Use the **generic pattern** for LangChain, AutoGPT, CrewAI, smolagents, or custom frameworks:
+
+**Full guide:** [docs/integrations/generic-agent.md](docs/integrations/generic-agent.md) — covers SDK import, CLI wrapper, and REST API patterns with tool definitions for any agent.
+
+### Integration Methods Summary
+
+| Method | When to use | Example |
+|--------|-------------|---------|
+| **SDK Import** | Python agents | `import fireagent as fa; sb.exec(...)` |
+| **CLI Wrapper** | Shell-only agents | `fireagent sandboxes exec <id> --command ...` |
+| **REST API** | HTTP-only agents | `curl -X POST /v1/sandboxes/<id>/exec` |
+| **Operator SDK** | Multi-host rollouts | `operator.create_sandbox(host, ...)` |
+| **SSH Workers** | Distributed agents | `fireagent hosts add worker.example.com` |
+
+---
+
 ## Tests
 
 ```bash

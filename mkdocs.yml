@@ -160,7 +160,12 @@ nav:
     - Threat Model: security/threat-model.md
     - Isolation Guarantees: security/isolation.md
     - Network Security: security/network.md
-  - Development:
+  - Integrations:
+    - integrations/index.md
+    - Claude Code: integrations/claude-code.md
+    - OpenAI Codex: integrations/openai-codex.md
+    - Generic Agent Pattern: integrations/generic-agent.md
+ - Development:
     - development/index.md
     - Contributing: development/contributing.md
     - Reproducible Builds: development/reproducible-builds.md
